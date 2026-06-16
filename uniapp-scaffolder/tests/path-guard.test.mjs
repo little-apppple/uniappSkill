@@ -48,3 +48,8 @@ test('isSensitivePath: detects home ssh and system dirs', () => {
 test('isSensitivePath: returns false for normal project paths', () => {
   assert.equal(isSensitivePath(path.join(tmp, 'my-app')), false)
 })
+
+test('isSensitivePath: case-insensitive on Windows', { skip: process.platform !== 'win32' }, () => {
+  assert.equal(isSensitivePath('c:\\windows\\system32\\foo'), true)
+  assert.equal(isSensitivePath('C:\\WINDOWS'), true)
+})

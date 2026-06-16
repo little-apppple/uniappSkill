@@ -23,6 +23,10 @@ export function resolveSafeOut(outArg, { cwd, force }) {
 
 export function isSensitivePath(p) {
   const abs = path.resolve(p)
+  const cmp = process.platform === 'win32' ? (x) => x.toLowerCase() : (x) => x
+  const a = cmp(abs)
+  const matches = (target) => a === cmp(target) || a.startsWith(cmp(target) + path.sep)
+
   const home = os.homedir()
   const sensitiveSubstrings = [
     path.join(home, '.ssh'),
@@ -30,14 +34,13 @@ export function isSensitivePath(p) {
     path.join(home, '.aws'),
   ]
   for (const s of sensitiveSubstrings) {
-    if (abs === s || abs.startsWith(s + path.sep)) return true
+    if (matches(s)) return true
   }
   if (process.platform === 'win32') {
-    const winRoot = path.resolve('C:\\Windows')
-    if (abs === winRoot || abs.startsWith(winRoot + path.sep)) return true
+    if (matches(path.resolve('C:\\Windows'))) return true
   } else {
-    if (abs === '/etc' || abs.startsWith('/etc/')) return true
-    if (abs === '/' ) return true
+    if (matches('/etc')) return true
+    if (matches('/')) return true
   }
   return false
 }
