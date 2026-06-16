@@ -1,0 +1,17 @@
+{
+  "name": "uniapp-scaffolder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "List, filter, and fetch uni-app starter templates from a curated registry.",
+  "bin": {
+    "uniapp-scaffold": "scripts/scaffold.mjs"
+  },
+  "scripts": {
+    "test": "node --test tests/**/*.test.mjs",
+    "validate": "node scripts/scaffold.mjs validate"
+  },
+  "devDependencies": {
+    "js-yaml": "^4.1.0"
+  }
+}
