@@ -1,0 +1,8 @@
+version: 1
+templates:
+  - id: bad
+    title: Bad entry
+    source: hbx_market
+    marketplace_id: not-an-int
+    tags: []
+    maintainer: dcloud

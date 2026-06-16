@@ -1,0 +1,10 @@
+version: 1
+templates:
+  - id: sample-1
+    title: Sample
+    source: github
+    repo: dcloudio/uni-preset-vue
+    ref: vite
+    tags: [vue3, bare]
+    platforms: [h5, mp-weixin]
+    maintainer: dcloud
