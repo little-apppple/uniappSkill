@@ -1,6 +1,6 @@
 ---
 name: uniapp-testing
-description: "Testing uni-app apps — unit tests with Vitest (mocking uni.* APIs), component tests, E2E on H5 with Playwright, mini-program automation with miniprogram-automator and miniprogram-ci, real-device App testing, and CI integration across all target platforms. Use when the user wants to add tests, set up a test framework, mock uni.* globals, write E2E flows on H5, automate WeChat MP testing, or wire tests into GitHub Actions / GitLab CI."
+description: "Testing uni-app apps — unit tests with Vitest (mocking uni.* APIs), component tests, E2E on H5 with Playwright, real-device App testing, and CI integration across all target platforms. For miniprogram-automator / MP UI automation, see uniapp-mp-automation."
 license: Complete terms in LICENSE.txt
 ---
 
@@ -10,7 +10,9 @@ The **test layer** for uni-app. After loading this skill, the agent should be ab
 
 1. Set up Vitest (or Jest) for unit + component tests, with `uni.*` mocks
 2. Set up Playwright for H5 E2E
-3. Set up `miniprogram-automator` for WeChat MP UI automation
+3. MP UI automation (build → launch DevTools → assert UI → screenshot) → see
+   `uniapp-mp-automation` (MCP-driven workflow) or use `miniprogram-automator`
+   directly (covered by the sibling skill)
 4. Use `miniprogram-ci` for automated MP preview + screenshot diffs
 5. Wire tests into GitHub Actions / GitLab CI with a per-platform matrix
 6. Test on real devices for App (iOS / Android)
@@ -27,13 +29,13 @@ behavior, MP automation.
 - "How do I set up Vitest for a uni-app project?"
 - "How do I mock `uni.request` / `uni.getStorage` in tests?"
 - "How do I write an E2E test for my H5 build?"
-- "How do I automate clicks inside WeChat DevTools?"
 - "How do I run tests on multiple platforms in CI?"
-- "How do I take a screenshot of my MP for visual regression?"
 
 ## When NOT to use this skill
 
 - "Should I write tests first?" → `tdd` / `test-driven-development` skills
+- "How do I automate DevTools / assert UI / screenshot MP?" →
+  `uniapp-mp-automation` (MCP-driven workflow with `weixin-devtools-mcp`)
 - "How do I deploy?" → `uniapp-debugging-and-publishing`
 - "How do I structure my code for testability?" → `uniapp-state-and-data` (Pinia stores
   are easy to test) + `uniapp-network-layer` (the request wrapper is the seam for mocks)
@@ -54,7 +56,7 @@ tools for each:
 | **Unit tests** | Vitest | Pure functions, Pinia stores, composables | Node.js (in CI) |
 | **Component tests** | Vitest + @vue/test-utils | Vue components in isolation | Node.js (in CI) |
 | **E2E (H5)** | Playwright | Real user flows in a real browser | Headless Chrome / Firefox in CI |
-| **Mini-program automation** | `miniprogram-automator` | Click flows, screen capture, network inspection | WeChat DevTools (CI or local) |
+| **Mini-program automation** | `uniapp-mp-automation` (MCP) / `miniprogram-automator` | Click flows, screen capture, network inspection | WeChat DevTools (CI or local) |
 
 App (iOS / Android) doesn't have a viable automated E2E story inside uni-app; use
 manual QA or device farms (BrowserStack, Sauce Labs, or DCloud's own cloud test
@@ -388,98 +390,17 @@ npx playwright test --ui            # interactive
 npx playwright codegen http://localhost:5173   # record
 ```
 
-## Mini-program automation with miniprogram-automator
+## Mini-program automation
 
-`miniprogram-automator` lets you drive WeChat DevTools from Node — perfect for E2E on
-the WeChat MP build.
+For MCP-driven MP automation (build → launch DevTools → assert UI → screenshot →
+network inspection), load **`uniapp-mp-automation`** — it provides a complete
+workflow via `weixin-devtools-mcp` (31 MCP tools) with Claude / Cursor / VS Code
+integration and CI/CD templates.
 
-### Install
-
-```bash
-npm i -D miniprogram-automator
-```
-
-### Sample script
-
-```js
-// scripts/mp-e2e.js
-const assert = require('assert')
-const { spawn } = require('child_process')
-const automator = require('miniprogram-automator')
-const path = require('path')
-
-async function main() {
-  // Launch WeChat DevTools with the built MP project
-  const devtools = await automator.launch({
-    cliPath: 'C:/Program Files (x86)/Tencent/微信web开发者工具/cli.bat',
-    projectPath: path.resolve(__dirname, '../dist/build/mp-weixin')
-  })
-
-  try {
-    // Wait for the page to be ready
-    await devtools.connect()
-    const page = await devtools.page
-    const mpPage = await page.waitFor('pages/index/index')
-
-    // Take initial screenshot
-    await mpPage.screenshot({ path: 'e2e/screenshots/home.png' })
-
-    // Get the current page data
-    const data = await mpPage.data()
-    console.log('Page data:', data)
-
-    // Tap a button by selector (use the wxml selector)
-    await mpPage.tap('button.confirm')
-
-    // Wait for the next page
-    const detailPage = await page.waitFor('pages/detail/detail')
-    await detailPage.waitFor(2000)  // 2s for network/UI to settle
-    const detail = await detailPage.data()
-    assert.strictEqual(detail.id, '123')
-
-    // Capture network calls
-    const requests = []
-    await mpPage.exposeFunction('__recordRequest', (url) => requests.push(url))
-    // (instrument the app's request wrapper to call __recordRequest)
-
-    console.log('Captured requests:', requests)
-  } finally {
-    await devtools.close()
-  }
-}
-
-main().catch(err => { console.error(err); process.exit(1) })
-```
-
-### Visual regression with screenshot diffs
-
-```js
-// scripts/mp-visual.js
-const { PNG } = require('pngjs')
-const fs = require('fs')
-const path = require('path')
-
-function diff(a, b) {
-  const A = PNG.sync.read(fs.readFileSync(a))
-  const B = PNG.sync.read(fs.readFileSync(b))
-  if (A.width !== B.width || A.height !== B.height) {
-    throw new Error('Dimension mismatch')
-  }
-  let diffPixels = 0
-  for (let i = 0; i < A.data.length; i += 4) {
-    if (A.data[i] !== B.data[i] || A.data[i+1] !== B.data[i+1] || A.data[i+2] !== B.data[i+2]) {
-      diffPixels++
-    }
-  }
-  return diffPixels / (A.width * A.height)
-}
-
-const ratio = diff('baseline.png', 'current.png')
-if (ratio > 0.01) {  // >1% pixels different
-  console.error(`Visual regression: ${(ratio * 100).toFixed(2)}% pixels differ`)
-  process.exit(1)
-}
-```
+If you need a standalone Node.js script using `miniprogram-automator` directly
+(e.g., in a custom CI step), refer to `uniapp-mp-automation` for the detailed
+guide and sample scripts. This skill covers the unit / H5 E2E testing layers;
+the sibling skill covers the MP automation layer.
 
 ## App testing on real devices
 
@@ -536,22 +457,8 @@ jobs:
           name: playwright-report
           path: playwright-report/
 
-  mp-automator:
-    runs-on: macos-latest   # WeChat DevTools is Windows/macOS
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 18, cache: 'npm' }
-      - run: npm ci
-      - run: npm run build:mp-weixin
-      - name: Install WeChat DevTools
-        run: |
-          brew install --cask wechat-webdevtools   # macOS
-          # or: download from https://developers.weixin.qq.com/miniprogram/dev/devtools/download.html
-      - run: node scripts/mp-e2e.js
-        env:
-          WECHAT_DEVTOOLS_CLI: '/Applications/wechatwebdevtools.app/Contents/MacOS/cli'
 ```
+  # MP automation (build → DevTools → assert) → see uniapp-mp-automation
 
 ### GitLab CI
 
@@ -584,8 +491,8 @@ test:e2e:
    mock should match the platform you intend to test. Use the `platform` field.
 4. **Component tests with `view` / `text` / `image` elements** — happy-dom doesn't know
    them; use E2E on H5 for full DOM assertions.
-5. **`miniprogram-automator` requires WeChat DevTools to be installed** — CI must install
-   it first. On Linux, you'd need to use the Windows or macOS runner.
+5. **MP automation requires WeChat DevTools** — CI must install it first
+   (macOS/Windows only; see `uniapp-mp-automation` for CI templates).
 6. **Playwright's webServer is flaky on first run** — `reuseExistingServer: !process.env.CI`
    lets local dev skip the wait.
 7. **Tests that pass locally but fail in CI** — usually a missing `await`, a race on
@@ -597,7 +504,6 @@ test:e2e:
 - `references/unit-testing.md` — *planned*: deep dive on Vitest config, mocks, store testing
   (inline above)
 - `references/e2e-h5.md` — *planned*: Playwright patterns for H5 (inline above)
-- `references/mp-automator.md` — *planned*: full miniprogram-automator guide (inline above)
 - `references/mocking-uni.md` — *planned*: the complete `uni.*` mock surface
   (inline in `test/setup.ts` example)
 - `references/ci-integration.md` — *planned*: per-platform CI matrix, runner choice
@@ -610,7 +516,6 @@ test:e2e:
 - `examples/vitest-config.ts` — *planned* (currently inline)
 - `examples/component-test.vue` — *planned* (currently inline)
 - `examples/store-test.ts` — *planned* (currently inline)
-- `examples/mp-automator-script.js` — *planned* (currently inline)
 - `examples/playwright-test.spec.ts` — *planned* (currently inline)
 
 ## Resources

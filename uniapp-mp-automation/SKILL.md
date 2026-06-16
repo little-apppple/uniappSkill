@@ -28,7 +28,9 @@ After loading this skill, the agent should be able to:
 ## When NOT to use this skill
 
 - "帮我手动调试小程序" → `uniapp-debugging-and-publishing`（手动调试面板使用）
-- "写单元测试" → `uniapp-testing`（Vitest / Playwright）
+- "写单元测试 / H5 E2E / CI 测试矩阵" → `uniapp-testing`（Vitest / Playwright）
+- "需要 `miniprogram-automator` 的轻量脚本用于 CI 步骤" → `uniapp-testing`
+  （本 skill 提供完整 MCP + automator 深度内容，`uniapp-testing` 提供轻量引用）
 - "配置 manifest.json" → `uniapp-platform-config`（appid、权限声明）
 - "如何上传审核" → `uniapp-debugging-and-publishing`（发版流程）
 - "如何使用 `wx.xxx` API" → `uniapp-project`（组件/API 查阅）
