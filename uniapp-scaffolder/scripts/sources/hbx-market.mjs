@@ -1,6 +1,5 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { pipeline } from 'node:stream/promises'
 
 // Per references/hbuilderx-protocol.md: the marketplace exposes a
 // download endpoint that HBuilderX uses internally. The exact URL and
@@ -29,10 +28,13 @@ export async function fetchViaMarket({ marketplaceId, out, log }) {
       `uniapp-scaffolder/references/hbuilderx-protocol.md for the documented workaround.`
     )
   }
+  const buffer = Buffer.from(await res.arrayBuffer())
+  if (buffer.length === 0) {
+    throw new Error(`hbx-market: marketplace returned empty body for id ${marketplaceId}`)
+  }
   await fs.promises.mkdir(out, { recursive: true })
   const zipPath = path.join(out, '..', '.scaffold.zip')
-  const fileStream = fs.createWriteStream(zipPath)
-  await pipeline(res.body, fileStream)
+  fs.writeFileSync(zipPath, buffer)
   await extractZip(zipPath, out, log)
   await fs.promises.unlink(zipPath)
 }

@@ -7,26 +7,7 @@ import { setFetcher, fetchViaMarket } from '../../scripts/sources/hbx-market.mjs
 
 const silentLog = { info(){}, warn(){}, error(){}, progress(){} }
 
-test('fetchViaMarket: writes provenance file and extracted contents on 200', async () => {
-  // 1x1 transparent PNG used as a stand-in "zip" — the unzip step is
-  // expected to fail in this test, so we instead patch the module's
-  // zip extraction. For end-to-end coverage we rely on a manual run.
-  setFetcher(async () => ({
-    ok: true,
-    body: new ReadableStream({
-      start(c) { c.close() }
-    }),
-    contentType: 'application/zip',
-  }))
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-mkt-'))
-  const out = path.join(tmp, 'out')
-  await assert.rejects(
-    () => fetchViaMarket({ marketplaceId: 1234, out, log: silentLog }),
-    /no zip extractor|zip|extracting/
-  )
-})
-
-test('fetchViaMarket: throws with manual-fallback message on non-200', async () => {
+test('fetchViaMarket: rejects on non-200 status with HBuilderX fallback message', async () => {
   setFetcher(async () => ({ ok: false, status: 404, statusText: 'Not Found' }))
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-mkt-'))
   const out = path.join(tmp, 'out')
@@ -35,3 +16,37 @@ test('fetchViaMarket: throws with manual-fallback message on non-200', async () 
     /HBuilderX/
   )
 })
+
+test('fetchViaMarket: rejects on empty body', async () => {
+  setFetcher(async () => ({
+    ok: true,
+    arrayBuffer: async () => new ArrayBuffer(0),
+  }))
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-mkt-'))
+  const out = path.join(tmp, 'out')
+  await assert.rejects(
+    () => fetchViaMarket({ marketplaceId: 1234, out, log: silentLog }),
+    /empty body/
+  )
+})
+
+test('fetchViaMarket: rejects when zip extraction of non-empty body fails', async () => {
+  // Provide a small non-empty buffer that is not a valid zip, so the
+  // platform-specific extractor (Expand-Archive / unzip) rejects it.
+  setFetcher(async () => ({
+    ok: true,
+    arrayBuffer: async () => {
+      const buf = new ArrayBuffer(4)
+      const view = new Uint8Array(buf)
+      view[0] = 0x00; view[1] = 0x00; view[2] = 0x00; view[3] = 0x00
+      return buf
+    },
+  }))
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-mkt-'))
+  const out = path.join(tmp, 'out')
+  await assert.rejects(
+    () => fetchViaMarket({ marketplaceId: 5678, out, log: silentLog }),
+    /extracting|zip|exit/
+  )
+})
+

@@ -43,8 +43,17 @@ function parseArgs(argv) {
     if (a === '--help' || a === '-h') args.options.help = true
     else if (a.startsWith('--')) {
       const eq = a.indexOf('=')
-      if (eq >= 0) args.options[a.slice(2, eq)] = a.slice(eq + 1)
-      else { args.options[a.slice(2)] = true; args.options.__peek = argv[i + 1] }
+      if (eq >= 0) {
+        args.options[a.slice(2, eq)] = a.slice(eq + 1)
+      } else {
+        const name = a.slice(2)
+        args.options[name] = true
+        const next = argv[i + 1]
+        if (next !== undefined && !next.startsWith('--') && !next.startsWith('-')) {
+          args.options._peek = args.options._peek || {}
+          args.options._peek[name] = next
+        }
+      }
     } else args._.push(a)
   }
   return args
@@ -53,10 +62,9 @@ function parseArgs(argv) {
 function getOpt(args, name, fallback) {
   const v = args.options[name]
   if (v === true) {
-    // peek form: --tags vue3 → stored in options as true with __peek
-    if (args.options.__peek !== undefined) {
-      const peek = args.options.__peek
-      args.options.__peek = undefined
+    if (args.options._peek && args.options._peek[name] !== undefined) {
+      const peek = args.options._peek[name]
+      delete args.options._peek[name]
       return peek
     }
     return fallback
