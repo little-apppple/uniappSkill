@@ -70,3 +70,22 @@ test('createLogger({json:true}): progress() is suppressed', () => {
     assert.equal(cap.stderr(), '')
   } finally { cap.restore() }
 })
+
+test('createLogger({json:false}): info() substitutes %s without quoting strings', () => {
+  const log = createLogger({ json: false })
+  const cap = captureStreams()
+  try {
+    log.info('fetched %s', 'uni-preset-vue-vite')
+    assert.match(cap.stdout(), /fetched uni-preset-vue-vite/)
+    assert.doesNotMatch(cap.stdout(), /"/)
+  } finally { cap.restore() }
+})
+
+test('createLogger({json:false}): warn() substitutes %d for numbers', () => {
+  const log = createLogger({ json: false })
+  const cap = captureStreams()
+  try {
+    log.warn('%d entries', 7)
+    assert.match(cap.stderr(), /WARN: 7 entries/)
+  } finally { cap.restore() }
+})

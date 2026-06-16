@@ -1,3 +1,5 @@
+import { format as utilFormat } from 'node:util'
+
 export function createLogger({ json }) {
   function emit(stream, level, msg, data) {
     if (json) {
@@ -20,6 +22,6 @@ export function createLogger({ json }) {
 function format(msg, data) {
   if (typeof msg !== 'string') return JSON.stringify(msg)
   if (data === undefined) return msg
-  try { return msg.replace(/%[sdj]/g, () => JSON.stringify(data)) }
-  catch { return msg }
+  if (!/%[sdjoO]/.test(msg)) return msg
+  return utilFormat(msg, data)
 }
