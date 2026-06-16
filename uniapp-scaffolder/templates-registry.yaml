@@ -1,0 +1,63 @@
+version: 1
+templates:
+  - id: uni-preset-vue-vite
+    title: "官方 Vue 3 + Vite 空白模板"
+    description: "dcloudio 官方骨架，无业务逻辑。最适合作为二次开发起点。"
+    source: github
+    repo: dcloudio/uni-preset-vue
+    ref: vite
+    tags: [official, vue3, vite, bare]
+    platforms: [h5, mp-weixin, mp-alipay, app]
+    maintainer: dcloud
+
+  - id: uni-preset-vue-vite-ts
+    title: "官方 Vue 3 + Vite + TypeScript 空白模板"
+    description: "dcloudio 官方骨架，TypeScript 版本。"
+    source: github
+    repo: dcloudio/uni-preset-vue
+    ref: vite-ts
+    tags: [official, vue3, vite, typescript, bare]
+    platforms: [h5, mp-weixin, app]
+    maintainer: dcloud
+
+  # The four entries below require verified community GitHub repos.
+  # If a repo is not yet verified, comment the entry out and add it in a
+  # follow-up PR. Do NOT ship an unverified entry as enabled.
+  #
+  # - id: uniapp-tabbar-starter
+  #   title: "Tabbar 多页应用起步模板"
+  #   description: "含 4 个底部 tab 页面、登录占位、request 封装示例。"
+  #   source: github
+  #   repo: <org>/uniapp-tabbar-starter      # ← set after verification
+  #   tags: [tabbar, vue3, vite, login-skeleton]
+  #   platforms: [h5, mp-weixin, app]
+  #   maintainer: community
+  #
+  # - id: uniapp-i18n-starter
+  #   title: "带 vue-i18n 的多语言模板"
+  #   source: github
+  #   repo: <org>/uniapp-i18n-starter
+  #   tags: [i18n, vue3, vite]
+  #   platforms: [h5, mp-weixin, app]
+  #   maintainer: community
+  #
+  # - id: uniapp-with-uni-pay
+  #   title: "集成 uni-pay 的支付示例模板"
+  #   source: github
+  #   repo: <org>/uniapp-with-uni-pay
+  #   tags: [payment, vue3, uni-pay]
+  #   platforms: [h5, mp-weixin, app]
+  #   maintainer: community
+  #
+  # - id: uniapp-with-uni-push
+  #   title: "集成 uni-push 的推送示例模板"
+  #   source: github
+  #   repo: <org>/uniapp-with-uni-push
+  #   tags: [push, vue3, uni-push]
+  #   platforms: [app]
+  #   maintainer: community
+
+  # hbx_market entries are intentionally omitted from v1 until a maintainer
+  # verifies a real marketplace id. See references/hbuilderx-protocol.md
+  # for the protocol notes and SKILL.md "Adding a template" for the
+  # contribution flow.
