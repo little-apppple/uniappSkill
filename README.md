@@ -1,5 +1,9 @@
 # Uni-app Skills — Complete Set
 
+> **Note: this skill set is still under active development and is not yet
+> stable.** Content, structure, and cross-references may change between
+> versions. Contributions and iteration feedback are welcome.
+
 A complete, layered set of skills for **uni-app** development, covering everything from
 project scaffolding to publishing, including testing, i18n, and uniCloud backend.
 Use this as the entry point; route to the right sub-skill for the task at hand.
