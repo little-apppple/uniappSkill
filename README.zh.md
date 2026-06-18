@@ -27,27 +27,64 @@
 | [`uniapp-ui-libraries`](./uniapp-ui-libraries/SKILL.md) | uView Plus / FirstUI / ThorUI / Wot Design Uni / uv-ui / vk-uview-ui / Tuniao / ColorUI / GraceUI 的对比与集成 | 选择 UI 库、安装配置、自定义主题、库间迁移 |
 | [`uniapp-scaffolder`](./uniapp-scaffolder/SKILL.md) | 通过 CLI 列出、筛选和拉取项目模板 | Agent/CI：从精选模板库脚手架、无头模板拉取 |
 
-> 另有预置的 **`uniapp-project`** 技能（已在你的 Claude skills 目录中）——提供所有 uni-app 内置组件、uni-ui 组件和 API 的参考目录。用于单组件/单 API 的查询。以上技能属于**工作流/模式**层。
+> 另有预置的 **`uniapp-project`** 技能 —— 提供所有 uni-app 内置组件、uni-ui 组件和 API 的参考目录。用于单组件/单 API 的查询。以上技能属于**工作流/模式**层。
 >
-> **注意：** `uniapp-project` 是独立技能，不属于本集合的一部分——需要单独安装。如果没有它，可使用[官方 uni-app 文档](https://uniapp.dcloud.net.cn/)作为组件/API 参考的备选。
+> **依赖说明：`uniapp-project` 是独立技能，不属于本集合的一部分——需要单独安装。** 它位于本集合同级的 `%USERPROFILE%\.claude\skills\uniapp-project\`（Windows）或 `~/.claude/skills/uniapp-project/`（macOS/Linux）。如果你尚未安装，请参阅下方的 [安装 `uniapp-project`（必需依赖）](#安装-uniappproject必需依赖)；或退回到[官方 uni-app 文档](https://uniapp.dcloud.net.cn/)作为组件/API 参考的备选。
 
 ## 安装方式
+
+> **路径约定（本文档中）：**
+> - Windows: `%USERPROFILE%\.claude\skills\`（例如 `C:\Users\Administrator\.claude\skills\`）
+> - macOS / Linux: `$HOME/.claude/skills/`
+>
+> 请用你机器上对应的路径替换示例 —— `Administrator` 只是某台开发机的用户名，请根据你的操作系统和用户名调整。
 
 ### 方式 A：复制到 Claude skills 目录
 
 每个技能是一个独立的文件夹，根目录下有 `SKILL.md`。将文件夹复制到以下任一位置：
 
-- **全局技能**（所有项目可用）：`C:\Users\Administrator\.claude\skills\`
+- **全局技能**（所有项目可用）：`%USERPROFILE%\.claude\skills\`（Windows）或 `~/.claude/skills/`（macOS/Linux）
 - **项目技能**（按项目）：`<project>/.claude/skills/`
-- **Mavis 技能**：`C:\Users\Administrator\.mavis\skills\`
+- **Mavis 技能**：`%USERPROFILE%\.mavis\skills\`（Windows）或 `~/.mavis/skills/`（macOS/Linux）
+
+#### Windows（cmd / PowerShell）
 
 ```bash
 # 示例：将所有技能复制到全局 Claude skills 目录
-for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "C:\Users\Administrator\.claude\skills\%~nxs"
+for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
 # 或逐个复制技能：
-xcopy /E /I uniapp-skills\uniapp-architect "C:\Users\Administrator\.claude\skills\uniapp-architect"
-xcopy /E /I uniapp-skills\uniapp-fundamentals "C:\Users\Administrator\.claude\skills\uniapp-fundamentals"
-# ...
+xcopy /E /I uniapp-skills\uniapp-architect "%USERPROFILE%\.claude\skills\uniapp-architect"
+xcopy /E /I uniapp-skills\uniapp-fundamentals "%USERPROFILE%\.claude\skills\uniapp-fundamentals"
+xcopy /E /I uniapp-skills\uniapp-routing-and-tabbar "%USERPROFILE%\.claude\skills\uniapp-routing-and-tabbar"
+xcopy /E /I uniapp-skills\uniapp-state-and-data "%USERPROFILE%\.claude\skills\uniapp-state-and-data"
+xcopy /E /I uniapp-skills\uniapp-network-layer "%USERPROFILE%\.claude\skills\uniapp-network-layer"
+xcopy /E /I uniapp-skills\uniapp-ui-patterns "%USERPROFILE%\.claude\skills\uniapp-ui-patterns"
+xcopy /E /I uniapp-skills\uniapp-platform-config "%USERPROFILE%\.claude\skills\uniapp-platform-config"
+xcopy /E /I uniapp-skills\uniapp-performance "%USERPROFILE%\.claude\skills\uniapp-performance"
+xcopy /E /I uniapp-skills\uniapp-debugging-and-publishing "%USERPROFILE%\.claude\skills\uniapp-debugging-and-publishing"
+xcopy /E /I uniapp-skills\uniapp-testing "%USERPROFILE%\.claude\skills\uniapp-testing"
+xcopy /E /I uniapp-skills\uniapp-mp-automation "%USERPROFILE%\.claude\skills\uniapp-mp-automation"
+```
+
+#### macOS / Linux（bash / zsh）
+
+```bash
+# 示例：将所有技能复制到全局 Claude skills 目录
+for d in /path/to/uniapp-skills/uniapp-*; do
+  cp -r "$d" "$HOME/.claude/skills/$(basename "$d")"
+done
+# 或逐个复制技能：
+cp -r uniapp-skills/uniapp-architect        "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-fundamentals     "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-routing-and-tabbar "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-state-and-data   "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-network-layer    "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-ui-patterns      "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-platform-config  "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-performance      "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-debugging-and-publishing "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-testing          "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-mp-automation    "$HOME/.claude/skills/"
 ```
 
 重启 Claude / 客户端即可生效。
@@ -57,9 +94,15 @@ xcopy /E /I uniapp-skills\uniapp-fundamentals "C:\Users\Administrator\.claude\sk
 将整个 `uniapp-skills/` 文件夹复制到项目中的 `.claude/skills/`。当在该项目下工作时，agent 会自动加载这些技能。
 
 ```bash
-# 在您的 uni-app 项目中
+# 在您的 uni-app 项目中（macOS/Linux/WSL）
 mkdir -p .claude/skills
 cp -r uniapp-skills/* .claude/skills/
+```
+
+```powershell
+# 在您的 uni-app 项目中（Windows PowerShell）
+New-Item -ItemType Directory -Force -Path .claude/skills
+Copy-Item -Recurse uniapp-skills\* .claude/skills\
 ```
 
 ### 方式 C：接入 `mavis`
@@ -69,7 +112,135 @@ cp -r uniapp-skills/* .claude/skills/
 mavis skill add <skill-folder-path>
 ```
 
-或直接复制到 `mavis` agent 的技能目录：`C:\Users\Administrator\.mavis\agents\mavis\skills\`
+或直接复制到 `mavis` agent 的技能目录：`%USERPROFILE%\.mavis\agents\mavis\skills\`（Windows）或 `~/.mavis/agents/mavis/skills/`（macOS/Linux）。
+
+## 安装 `uniapp-project`（必需依赖）
+
+上面的 20 个技能**不依赖** `uniapp-project` 也能工作 —— 每个子技能都是自包含的。但对于"如何使用组件 X 或 API Y"的查询（日常 uni-app 开发的大头），你还需要把 `uniapp-project` 装到本集合旁边。
+
+`uniapp-project` **不随本仓库发布** —— 它是独立技能，有自己的发布节奏（与官方 uni-app 文档同步）。通过以下任一方式安装：
+
+### 方式 A：从已有的 Claude 安装复制
+
+如果你在别的机器上装过，或本机以前装过：
+
+```bash
+# Windows
+xcopy /E /I "C:\path\to\uniapp-project" "%USERPROFILE%\.claude\skills\uniapp-project"
+# macOS / Linux
+cp -r /path/to/uniapp-project "$HOME/.claude/skills/"
+```
+
+### 方式 B：从上游仓库克隆
+
+`uniapp-project` 与 [teachingai/full-stack-skills](https://github.com/teachingai/full-stack-skills) 集合一起发布。可在 [skills.sh](https://www.skills.sh/teachingai/full-stack-skills/uniapp-project) 浏览，或通过 `npx` 安装：
+
+```bash
+# 推荐（安装到 ~/.claude/skills/uniapp-project）：
+npx skills add https://github.com/teachingai/full-stack-skills --skill uniapp-project
+```
+
+或者无法跑 `npx` 时直接克隆：
+
+```bash
+# Windows
+cd %USERPROFILE%\.claude\skills
+git clone https://github.com/teachingai/full-stack-skills.git _tmp
+robocopy _tmp\skills\uniapp-project uniapp-project /E
+rmdir /s /q _tmp
+```
+
+```bash
+# macOS / Linux
+cd "$HOME/.claude/skills"
+git clone --depth 1 --filter=blob:none --sparse https://github.com/teachingai/full-stack-skills.git _tmp
+cd _tmp
+git sparse-checkout set skills/uniapp-project
+cp -r skills/uniapp-project ..
+cd .. && rm -rf _tmp
+```
+
+### 方式 C：通过包管理器 / mavis 安装
+
+```bash
+# 如果你的 agent 支持技能包安装
+mavis skill install uniapp-project
+```
+
+### 验证安装
+
+装好后，`uniapp-architect` 和 `uniapp-project` 都应出现在 Claude 客户端的技能列表中。每当你问及具体组件或 API 时，architect 的 `## When to use` 段会自动路由到 `uniapp-project`。
+
+### 跳过此依赖会怎样
+
+没有 `uniapp-project`，本套件的 20 个技能仍然覆盖所有**工作流、模式和陷阱** —— 这是设计上的职责划分：
+
+- **本套件**（工作流/模式）："列表页怎么实现下拉刷新？""微信小程序登录的最佳姿势是什么？""WXSS 有哪些限制？"
+- **`uniapp-project`**（参考目录）："`<scroll-view>` 接受哪些 props？""`uni.scanCode` 的签名？""哪些平台支持 `<live-pusher>`？"
+
+如果跳过 `uniapp-project`，参考类问题请退回到 [官方 uni-app 文档](https://uniapp.dcloud.net.cn/)。
+
+## 其他可选的技能依赖
+
+除 `uniapp-project` 外，本套件还引用了两个其他类别的技能。这两个**都不是使用 20 个 uni-app 技能的必需项**，但各自解锁一条特定工作流：
+
+### `tdd` / `test-driven-development` —— 用于 TDD 风格测试编写
+
+引用位置：
+- `uniapp-architect` 食谱 "I want to add tests to my uni-app"
+- `uniapp-testing` 的 `## When NOT to use`（"Should I write tests first?"）
+
+`uniapp-testing` 覆盖 **uni-app 特有的**测试问题：mock `uni.*`、跨平台行为、小程序自动化。`tdd` / `test-driven-development` 覆盖 **通用的测试优先流程**：红绿重构、测试命名、何时 mock 与何时不 mock。从零写新测试文件时，建议 `tdd` 与 `uniapp-testing` 同时加载。
+
+`tdd` 和 `test-driven-development` 都来自 [obra/superpowers](https://github.com/obra/superpowers) 集合，可在 [skills.sh/obra/superpowers](https://www.skills.sh/obra/superpowers) 浏览全部 superpowers 技能。
+
+通过 `npx` 安装：
+
+```bash
+# 推荐（一次性装所有 superpowers 技能到 ~/.claude/skills/）：
+npx skills add obra/superpowers
+
+# 或只装 tdd + test-driven-development 两个（省上下文）：
+npx skills add https://github.com/obra/superpowers --skill tdd
+npx skills add https://github.com/obra/superpowers --skill test-driven-development
+```
+
+装好后技能落在 `%USERPROFILE%\.claude\skills\tdd\` 和 `%USERPROFILE%\.claude\skills\test-driven-development\`（Windows），或 `~/.claude/skills/tdd/` 和 `~/.claude/skills/test-driven-development/`（macOS/Linux）。
+
+### `superpowers:*` 过程技能 —— 用于 code review / 规划工作流
+
+`uniapp-architect` 的 `## Code review mode` 段（v1.4.2 新增）被设计为：当 agent 对 uni-app 项目跑 code review 时自动触发。要获得完整的自动化体验：
+
+- 安装 [obra/superpowers](https://github.com/obra/superpowers) 框架 —— 在 [skills.sh/obra/superpowers](https://www.skills.sh/obra/superpowers) 浏览全部技能。它提供 `superpowers:code-review`、`superpowers:requesting-code-review`、`superpowers:using-superpowers`、`superpowers:brainstorming` 等过程技能
+- 当对 uni-app 项目运行 `/code-review`（或 `simplify`）时，agent 应自动加载 `uniapp-architect` 并按 Code review mode 清单执行
+
+通过 `npx` 安装：
+
+```bash
+# 一次性装全部 superpowers 技能：
+npx skills add obra/superpowers
+
+# 或只装 review 相关的几个：
+npx skills add https://github.com/obra/superpowers --skill code-review
+npx skills add https://github.com/obra/superpowers --skill requesting-code-review
+npx skills add https://github.com/obra/superpowers --skill receiving-code-review
+npx skills add https://github.com/obra/superpowers --skill using-superpowers
+```
+
+不安装 superpowers 时，`uniapp-architect` 仍然工作 —— 只是没有自动触发的 review 工作流。`## Code review mode` 的 10 步清单可以人工驱动 review 时直接阅读。
+
+### Superpowers 协同（信息性）
+
+少量其他 superpowers 技能被内部计划文档（`docs/superpowers/plans/*.md`）引用，用于 scaffolder 的实现：
+
+- `superpowers:subagent-driven-development` / `superpowers:executing-plans` —— 用来按任务逐步推进 scaffolder 实现计划
+- `superpowers:writing-plans` —— 用来创建未来的计划文档
+
+这些**仅在你要读 `docs/superpowers/` 下的计划文档来做实现工作时相关**。日常使用 20 个 uni-app 技能并不需要它们。一次性全部装齐：
+
+```bash
+npx skills add obra/superpowers
+```
 
 ## 使用方式
 

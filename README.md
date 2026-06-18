@@ -29,42 +29,74 @@ Use this as the entry point; route to the right sub-skill for the task at hand.
 | [`uniapp-ui-libraries`](./uniapp-ui-libraries/SKILL.md) | Comparison and integration for uView Plus / FirstUI / ThorUI / Wot Design Uni / uv-ui / vk-uview-ui / Tuniao / ColorUI / GraceUI | Pick a UI library, install and configure it, customize the theme, migrate between libraries |
 | [`uniapp-scaffolder`](./uniapp-scaffolder/SKILL.md) | List, filter, and fetch starter templates via CLI | Agent / CI: scaffolding from filtered registry, headless template fetch |
 
-> Plus the pre-existing **`uniapp-project`**** skill (already in your Claude skills
-> directory) — a reference catalog of all uni-app built-in components, uni-ui components,
-> and APIs. Use it for per-component / per-API lookup. The skills above are the
-> **workflow / pattern** layer that sits on top.
+> Plus the pre-existing **`uniapp-project`** skill — a reference catalog of all uni-app
+> built-in components, uni-ui components, and APIs. Use it for per-component / per-API
+> lookup. The skills above are the **workflow / pattern** layer that sits on top.
 >
-> **Note:** `uniapp-project` is a separate skill that is NOT part of this collection — it
-> must be installed independently. If you don't have it, use the
-> [official uni-app documentation](https://uniapp.dcloud.net.cn/) as a fallback for
-> component/API reference.
+> **Dependency: `uniapp-project` is a separate skill that is NOT part of this
+> collection — it must be installed independently.** It lives next to this set at
+> `%USERPROFILE%\.claude\skills\uniapp-project\` (Windows) or
+> `~/.claude/skills/uniapp-project/` (macOS/Linux). If you don't have it,
+> see [Install `uniapp-project`](#install-uniapp-project-required-dependency) below,
+> or fall back to the [official uni-app documentation](https://uniapp.dcloud.net.cn/)
+> for component/API reference.
 
 ## How to install
+
+> **Path convention used below:**
+> - Windows: `%USERPROFILE%\.claude\skills\` (e.g. `C:\Users\Administrator\.claude\skills\`)
+> - macOS / Linux: `$HOME/.claude/skills/`
+>
+> Substitute your own user directory — `Administrator` in the Windows example is
+> specific to one developer's machine; use the path matching your OS and user.
 
 ### Option A: Copy to a Claude skills directory
 
 Each skill is a self-contained folder with `SKILL.md` at its root. Copy the folders
 into any of the following:
 
-- **Global skills** (available to all projects): `C:\Users\Administrator\.claude\skills\`
+- **Global skills** (available to all projects): `%USERPROFILE%\.claude\skills\` (Windows) or `~/.claude/skills/` (macOS/Linux)
 - **Project skills** (per-project): `<project>/.claude/skills/`
-- **Mavis skills**: `C:\Users\Administrator\.mavis\skills\`
+- **Mavis skills**: `%USERPROFILE%\.mavis\skills\` (Windows) or `~/.mavis/skills/` (macOS/Linux)
+
+#### Windows (cmd / PowerShell)
 
 ```bash
 # Example: copy all skills to global Claude skills directory
-for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "C:\Users\Administrator\.claude\skills\%~nxs"
+for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
 # Or copy individual skills:
-xcopy /E /I uniapp-skills\uniapp-architect "C:\Users\Administrator\.claude\skills\uniapp-architect"
-xcopy /E /I uniapp-skills\uniapp-fundamentals "C:\Users\Administrator\.claude\skills\uniapp-fundamentals"
-xcopy /E /I uniapp-skills\uniapp-routing-and-tabbar "C:\Users\Administrator\.claude\skills\uniapp-routing-and-tabbar"
-xcopy /E /I uniapp-skills\uniapp-state-and-data "C:\Users\Administrator\.claude\skills\uniapp-state-and-data"
-xcopy /E /I uniapp-skills\uniapp-network-layer "C:\Users\Administrator\.claude\skills\uniapp-network-layer"
-xcopy /E /I uniapp-skills\uniapp-ui-patterns "C:\Users\Administrator\.claude\skills\uniapp-ui-patterns"
-xcopy /E /I uniapp-skills\uniapp-platform-config "C:\Users\Administrator\.claude\skills\uniapp-platform-config"
-xcopy /E /I uniapp-skills\uniapp-performance "C:\Users\Administrator\.claude\skills\uniapp-performance"
-xcopy /E /I uniapp-skills\uniapp-debugging-and-publishing "C:\Users\Administrator\.claude\skills\uniapp-debugging-and-publishing"
-xcopy /E /I uniapp-skills\uniapp-testing "C:\Users\Administrator\.claude\skills\uniapp-testing"
-xcopy /E /I uniapp-skills\uniapp-mp-automation "C:\Users\Administrator\.claude\skills\uniapp-mp-automation"
+xcopy /E /I uniapp-skills\uniapp-architect "%USERPROFILE%\.claude\skills\uniapp-architect"
+xcopy /E /I uniapp-skills\uniapp-fundamentals "%USERPROFILE%\.claude\skills\uniapp-fundamentals"
+xcopy /E /I uniapp-skills\uniapp-routing-and-tabbar "%USERPROFILE%\.claude\skills\uniapp-routing-and-tabbar"
+xcopy /E /I uniapp-skills\uniapp-state-and-data "%USERPROFILE%\.claude\skills\uniapp-state-and-data"
+xcopy /E /I uniapp-skills\uniapp-network-layer "%USERPROFILE%\.claude\skills\uniapp-network-layer"
+xcopy /E /I uniapp-skills\uniapp-ui-patterns "%USERPROFILE%\.claude\skills\uniapp-ui-patterns"
+xcopy /E /I uniapp-skills\uniapp-platform-config "%USERPROFILE%\.claude\skills\uniapp-platform-config"
+xcopy /E /I uniapp-skills\uniapp-performance "%USERPROFILE%\.claude\skills\uniapp-performance"
+xcopy /E /I uniapp-skills\uniapp-debugging-and-publishing "%USERPROFILE%\.claude\skills\uniapp-debugging-and-publishing"
+xcopy /E /I uniapp-skills\uniapp-testing "%USERPROFILE%\.claude\skills\uniapp-testing"
+xcopy /E /I uniapp-skills\uniapp-mp-automation "%USERPROFILE%\.claude\skills\uniapp-mp-automation"
+```
+
+#### macOS / Linux (bash / zsh)
+
+```bash
+# Example: copy all skills to global Claude skills directory
+for d in /path/to/uniapp-skills/uniapp-*; do
+  cp -r "$d" "$HOME/.claude/skills/$(basename "$d")"
+done
+# Or copy individual skills:
+cp -r uniapp-skills/uniapp-architect        "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-fundamentals     "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-routing-and-tabbar "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-state-and-data   "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-network-layer    "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-ui-patterns      "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-platform-config  "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-performance      "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-debugging-and-publishing "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-testing          "$HOME/.claude/skills/"
+cp -r uniapp-skills/uniapp-mp-automation    "$HOME/.claude/skills/"
 ```
 
 Restart Claude / your client to pick them up.
@@ -75,9 +107,15 @@ Copy the entire `uniapp-skills/` folder into your project's `.claude/skills/`. T
 agent will see them when working on that project.
 
 ```bash
-# In your uni-app project
+# In your uni-app project (macOS/Linux/WSL)
 mkdir -p .claude/skills
 cp -r uniapp-skills/* .claude/skills/
+```
+
+```powershell
+# In your uni-app project (Windows PowerShell)
+New-Item -ItemType Directory -Force -Path .claude/skills
+Copy-Item -Recurse uniapp-skills\* .claude/skills\
 ```
 
 ### Option C: Wire into `mavis`
@@ -88,7 +126,176 @@ mavis skill add <skill-folder-path>
 ```
 
 Or copy into the `mavis` agent's skills directory:
-`C:\Users\Administrator\.mavis\agents\mavis\skills\`
+`%USERPROFILE%\.mavis\agents\mavis\skills\` (Windows) or
+`~/.mavis/agents/mavis/skills/` (macOS/Linux).
+
+## Install `uniapp-project` (required dependency)
+
+The 20 skills above work **without** `uniapp-project` — every sub-skill is
+self-contained. But for "how do I use component X or API Y" lookups (the bulk of
+routine uni-app development), you'll also want the `uniapp-project` skill
+installed next to this set.
+
+`uniapp-project` is **not shipped in this repo** — it's a separate skill with its
+own release cadence (it mirrors the official uni-app docs). Install it via one of:
+
+### Option A: Copy from an existing Claude install
+
+If you have it on another machine or it was previously installed on this one:
+
+```bash
+# Windows
+xcopy /E /I "C:\path\to\uniapp-project" "%USERPROFILE%\.claude\skills\uniapp-project"
+# macOS / Linux
+cp -r /path/to/uniapp-project "$HOME/.claude/skills/"
+```
+
+### Option B: Clone from the upstream repo
+
+`uniapp-project` is published as part of the [teachingai/full-stack-skills](https://github.com/teachingai/full-stack-skills)
+collection. Browse on [skills.sh](https://www.skills.sh/teachingai/full-stack-skills/uniapp-project)
+or install via `npx`:
+
+```bash
+# Recommended (installs to ~/.claude/skills/uniapp-project):
+npx skills add https://github.com/teachingai/full-stack-skills --skill uniapp-project
+```
+
+Or clone directly (when you can't run `npx`):
+
+```bash
+# Windows
+cd %USERPROFILE%\.claude\skills
+git clone https://github.com/teachingai/full-stack-skills.git _tmp
+robocopy _tmp\skills\uniapp-project uniapp-project /E
+rmdir /s /q _tmp
+```
+
+```bash
+# macOS / Linux
+cd "$HOME/.claude/skills"
+git clone --depth 1 --filter=blob:none --sparse https://github.com/teachingai/full-stack-skills.git _tmp
+cd _tmp
+git sparse-checkout set skills/uniapp-project
+cp -r skills/uniapp-project ..
+cd .. && rm -rf _tmp
+```
+
+### Option C: Install via your package manager / mavis
+
+```bash
+# If your agent supports package install for skills
+mavis skill install uniapp-project
+```
+
+### Verify it works
+
+After installing, both `uniapp-architect` and `uniapp-project` should appear in
+your Claude client's skill list. The architect's `## When to use` section will
+route you to `uniapp-project` whenever you ask about a specific component or API.
+
+### If you skip this dependency
+
+Without `uniapp-project`, the 20 skills in this set still cover all **workflow,
+pattern, and pitfalls** content — that's the intended division of labor:
+
+- **This set** (workflow / pattern): "How do I build a list page with
+  pull-to-refresh?", "What's the right way to handle WeChat MP login?", "What
+  are the WXSS limitations?"
+- **`uniapp-project`** (reference): "What props does `<scroll-view>` accept?",
+  "What's the signature of `uni.scanCode`?", "Which platforms support
+  `<live-pusher>`?"
+
+If you skip `uniapp-project`, fall back to the
+[official uni-app documentation](https://uniapp.dcloud.net.cn/) for the
+reference-side questions.
+
+## Other optional skill dependencies
+
+Beyond `uniapp-project`, two other skill categories are referenced by this set.
+Neither is required to use the 20 uni-app skills, but each unlocks a specific
+workflow:
+
+### `tdd` / `test-driven-development` — for TDD-style test authoring
+
+Referenced from:
+- `uniapp-architect` recipe "I want to add tests to my uni-app"
+- `uniapp-testing` `## When NOT to use` (for "Should I write tests first?")
+
+`uniapp-testing` covers **uni-app-specific** testing concerns: mocking `uni.*`,
+cross-platform behavior, MP automation. The `tdd` / `test-driven-development`
+skills cover **generic test-first process**: red-green-refactor, test naming,
+when to mock vs not. Load `tdd` alongside `uniapp-testing` when writing new
+test files from scratch.
+
+Both `tdd` and `test-driven-development` ship in the
+[obra/superpowers](https://github.com/obra/superpowers) collection. Browse the
+catalog at [skills.sh/obra/superpowers](https://www.skills.sh/obra/superpowers).
+
+Install via `npx`:
+
+```bash
+# Recommended (installs all superpowers skills to ~/.claude/skills/):
+npx skills add obra/superpowers
+
+# Or install only tdd + test-driven-development (saves context):
+npx skills add https://github.com/obra/superpowers --skill tdd
+npx skills add https://github.com/obra/superpowers --skill test-driven-development
+```
+
+After install, the skills land at `%USERPROFILE%\.claude\skills\tdd\` and
+`%USERPROFILE%\.claude\skills\test-driven-development\` (Windows) or
+`~/.claude/skills/tdd/` and `~/.claude/skills/test-driven-development/`
+(macOS/Linux).
+
+### `superpowers:*` process skills — for code review / planning workflows
+
+The `uniapp-architect` skill's `## Code review mode` section (added in v1.4.2)
+is designed to be triggered when an agent runs a code-review pass against a
+uni-app project. To get the full automated experience:
+
+- Install the [obra/superpowers](https://github.com/obra/superpowers) framework —
+  browse the full skill list at [skills.sh/obra/superpowers](https://www.skills.sh/obra/superpowers).
+  It provides `superpowers:code-review`, `superpowers:requesting-code-review`,
+  `superpowers:using-superpowers`, `superpowers:brainstorming`, and related
+  process skills.
+- When a `/code-review` (or `simplify`) runs against a uni-app codebase, the
+  agent should load `uniapp-architect` automatically and follow the Code review
+  mode checklist.
+
+Install via `npx`:
+
+```bash
+# Install the entire superpowers collection:
+npx skills add obra/superpowers
+
+# Or install only the review-related skills:
+npx skills add https://github.com/obra/superpowers --skill code-review
+npx skills add https://github.com/obra/superpowers --skill requesting-code-review
+npx skills add https://github.com/obra/superpowers --skill receiving-code-review
+npx skills add https://github.com/obra/superpowers --skill using-superpowers
+```
+
+Without superpowers installed, the `uniapp-architect` skill still works — you
+just won't get the auto-triggered review workflow. The 10-step checklist in
+`## Code review mode` can be read manually for human-driven code reviews.
+
+### Superpowers skill coordination (informational)
+
+A few other superpowers skills are referenced from internal plan docs
+(`docs/superpowers/plans/*.md`) for the scaffolder implementation:
+
+- `superpowers:subagent-driven-development` / `superpowers:executing-plans` —
+  for working through the scaffolder implementation plan task-by-task
+- `superpowers:writing-plans` — for creating future plan docs
+
+These are **only relevant if you're reading the plan docs under `docs/superpowers/`**
+for implementation work. They're not needed for using the 20 uni-app skills in
+production. Install all of them in one shot:
+
+```bash
+npx skills add obra/superpowers
+```
 
 ## How to use
 
