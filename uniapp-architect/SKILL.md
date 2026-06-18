@@ -249,3 +249,53 @@ onLaunch(() => {
 - ❌ Hard-coding `rpx` to `px` conversion in your head — just write `rpx` and let the framework do the work
 - ❌ Fetching user info from `uni.getUserInfo` and trusting it for production — WeChat changed the rules in 2021; use the official `button open-type="chooseAvatar"` and `getUserProfile` pattern (or `uni.login` + server-side session)
 - ❌ Calling `uni.getSystemInfoSync` to detect platform — use `uni.getSystemInfo` or, better, `/* #ifdef MP-WEIXIN */` for platform branches
+
+## Code review mode
+
+When reviewing a uni-app project (or running `/code-review` against one), scan in
+this order. Each item points to the canonical pitfalls section in the relevant
+skill — open that section to see the full list and examples.
+
+1. **Project shape** → `uniapp-fundamentals` Best practices #11–13
+   - No `app.component()` global registration on MP (causes `up.split is not a function`)
+   - No `<script setup>` `defineProps` in uni-app v3 alpha (use options API `export default { props, setup }`)
+   - `ref`/`computed`/`reactive` from `'vue'`; `onShow`/`onLoad` from `'@dcloudio/uni-app'`
+2. **WeChat MP footguns** → `uniapp-platform-config` Common mistakes #9–12
+   - WXSS `*` selector doesn't work — list element types explicitly
+   - No `position: sticky` / `backdrop-filter` / `env(safe-area-inset-bottom)` on MP — gate with `#ifndef MP-WEIXIN` or fallback
+   - No `custom-style` / `css-text` / `inline-style` as prop names on components
+   - No `@font-face` for icons on MP — see icon strategy below
+3. **Icons on WeChat MP** → `uniapp-ui-patterns` "Icon strategy on WeChat MP"
+   - No Google Fonts / Material Symbols CDN access
+   - No inline `<svg>` (compiler drops it) or `@font-face` (WXSS unstable)
+   - Stable: pre-rendered PNG via `<image :src>`
+4. **Component usage** → `uniapp-ui-patterns`, `uniapp-routing-and-tabbar`
+   - List page uses 3-state machine (`loading | empty | error | ready | loading-more | no-more`), not 3 booleans
+   - Forms validate inline + dirty-track before nav-away
+   - Custom nav bar respects tab bar bottom inset
+5. **Network layer** → `uniapp-network-layer` Common pitfalls
+   - Auth guard via `useAuthGuard()` instead of token check in every `onLoad`
+   - `uni.showToast` title is a string — never pass the whole error object
+   - Set explicit `timeout`; default is 60s on App, none on MP
+6. **State / storage** → `uniapp-state-and-data` Common mistakes
+   - No real secrets in `uni.storage` (it's plaintext)
+   - `uni.$off` in `onUnmounted` to avoid memory leaks
+   - Theme / locale choice persisted via settings store, not hardcoded
+7. **Theming (if dark mode present)** → `uniapp-theming` Common pitfalls
+   - Synchronous theme apply in `index.html` (H5) or `onLaunch` first line (MP/App) — no flash
+   - CSS variables, not hex values, in components
+8. **Testing** → `uniapp-testing` Common pitfalls
+   - Mock `uni.*` API (or use a preset)
+   - MP tests need WeChat DevTools + `miniprogram-automator` installed in the **user's** project
+9. **Build / publish** → `uniapp-debugging-and-publishing` error table
+   - `urlCheck: false` left in production (rejection risk)
+   - iOS `privacyDescription` / WeChat `permission.scope.*.desc` populated
+   - `requiredPrivateInfos` declared for `getLocation` / `chooseMedia`
+10. **Performance** → `uniapp-performance` Common mistakes
+    - `v-for` items have stable `:key`
+    - Images have `mode` + `lazy-load`
+    - `subPackages` when main > 2MB
+
+Each numbered section maps to one skill's pitfalls section — drill in for the full
+text and fix snippets. If a section has zero matches in the diff, move on; if it
+has matches, read the source-of-truth section before suggesting a change.

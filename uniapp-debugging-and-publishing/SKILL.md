@@ -96,6 +96,23 @@ best friend for "why is my main package 3MB".
 For real-device testing, click "预览" (Preview) in WeChat DevTools — generates a QR
 code the user scans in WeChat to open the dev build.
 
+**Inspecting compiled output** — when a component renders wrong or crashes, check
+the build artifact directly:
+
+```bash
+# View compiled component JS (check props, data, lifecycle hooks)
+cat dist/dev/mp-weixin/components/Icon.js
+
+# Find the runtime function that processes component props
+grep -n "function findComponentPropsData" dist/dev/mp-weixin/common/vendor.js
+
+# Check if a component has the internal uP property
+grep -n "uP" dist/dev/mp-weixin/components/Icon.js
+
+# Verify the runtime function that handles component properties
+grep -n "uP" node_modules/@dcloudio/uni-mp-weixin/dist/uni.mp.esm.js
+```
+
 ### App debug
 
 App debugging is more complex. HBuilderX supports:
@@ -133,6 +150,9 @@ For **uvue** (native):
 | `Error: 上传失败` | WeChat MP | Miniprogram size > 2MB main | Subpackage, or check WeChat DevTools dependency analysis |
 | `Build failed: gradlew not found` | App | Android Studio setup issue | Reinstall Android Studio with default options |
 | `Code Signing Error` | iOS | Provisioning profile mismatch | Re-download profile from Apple Developer Portal |
+| `up.split is not a function` | WeChat MP | Globally registered component or reserved attribute name (`custom-style`/`css-text`) | Use local `import` instead of `app.component()`; avoid reserved prop names |
+| `"ref" is not exported by "@dcloudio/uni-app"` | All | Wrong import source | Import `ref`, `computed` from `'vue'`, not `'@dcloudio/uni-app'` |
+| `Component is not found in path "..."` | MP | Component not registered on the page | Register locally in `components: {}` or use `easycom` |
 
 ## Error reporting
 

@@ -1,6 +1,6 @@
 ---
 name: uniapp-network-layer
-description: "Network layer in uni-app — request wrapper, interceptors, upload/download, error handling, retry, concurrency, and integration with Pinia auth. Use when the user needs to call APIs, encapsulate uni.request, handle 401/auth errors, upload images/files, manage request cancellation, configure base URL per environment, or build a typed API client. Covers uni.request, uni.uploadFile, uni.downloadFile, request/response interceptors, file upload to OSS/cos, timeout/retry, and common pitfalls (CORS on H5, domain whitelist on MP)."
+description: "Network layer in uni-app — request wrapper, interceptors, upload/download, error handling, retry, concurrency, integration with Pinia auth, and auth-guard patterns for login-protected pages. Use when the user needs to call APIs, encapsulate uni.request, handle 401/auth errors, upload images/files, manage request cancellation, configure base URL per environment, build a typed API client, or implement login redirect on protected pages. Covers uni.request, uni.uploadFile, uni.downloadFile, request/response interceptors, file upload to OSS/cos, timeout/retry, auth guard helper, and common pitfalls (CORS on H5, domain whitelist on MP, [object Object] in toasts)."
 license: Complete terms in LICENSE.txt
 ---
 
@@ -476,6 +476,52 @@ if (setCookie) cookieStore.set(setCookie)
 ```
 
 Most modern apps use **token-based auth** instead of session cookies — easier.
+
+### Auth guard pattern
+
+For pages that require authentication, use a dedicated guard rather than checking
+the token in every page's `onLoad`:
+
+```ts
+// src/utils/auth-guard.ts
+import { useAuthStore } from '@/store/auth'
+
+export function useAuthGuard() {
+  const auth = useAuthStore()
+  if (!auth.token) auth.loadToken()
+  if (auth.token) return true
+  uni.navigateTo({ url: '/pages/login/index' })
+  return false
+}
+```
+
+Call at the top of page setup:
+
+```ts
+onLoad(() => {
+  if (!useAuthGuard()) return
+  fetchList(true)
+})
+```
+
+### `[object Object]` in error toasts
+
+When catching errors, the toast title must be a string — passing the whole error
+object shows `[object Object]`:
+
+```ts
+try {
+  await api.something()
+} catch (e: any) {
+  // ❌ Shows "[object Object]"
+  uni.showToast({ title: e, icon: 'none' })
+
+  // ✅ Extract message first
+  uni.showToast({ title: e?.message || '加载失败', icon: 'none' })
+}
+```
+
+Always cast in `catch` — this is the most common "error about the error."
 
 ## References in this skill
 

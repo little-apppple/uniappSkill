@@ -1,6 +1,6 @@
 ---
 name: uniapp-ui-patterns
-description: "Reusable UI patterns in uni-app — list pages with pull-to-refresh and infinite scroll, form pages with validation, skeleton screens, empty states, error states, popup/dialog/toast patterns, custom navigation bar. Use when the user is building a list page, a form, a popup, or wants polished empty/loading/error states. Covers components from uni-ui, common UX patterns, and the practical details that the official docs skip (what to do when the list is empty, how to combine pull-refresh and infinite scroll, skeleton timing)."
+description: "Reusable UI patterns in uni-app — list pages with pull-to-refresh and infinite scroll, form pages with validation, skeleton screens, empty states, error states, popup/dialog/toast patterns, custom navigation bar, and icon strategy for mini-programs (PNG fallback when fonts/SVG aren't supported). Use when the user is building a list page, a form, a popup, an icon component, or wants polished empty/loading/error states. Covers components from uni-ui, common UX patterns, and the practical details that the official docs skip (what to do when the list is empty, how to combine pull-refresh and infinite scroll, skeleton timing, why fonts/SVG fail on MP and what to do instead)."
 license: Complete terms in LICENSE.txt
 ---
 
@@ -477,6 +477,39 @@ if (ok) await api.deleteOrder(id)
 See `uniapp-routing-and-tabbar/references/custom-nav-bar.md` for the complete pattern
 with status bar handling, scroll-driven title, and WeChat capsule alignment.
 
+## Icon strategy on WeChat MP
+
+WeChat MP (MP-WEIXIN) can't load Google Fonts or any external web fonts. Icons
+require a platform-native approach:
+
+| Approach | Problem on MP-WEIXIN |
+|---|---|
+| Google Fonts / Material Symbols | Entirely blocked — no CDN access |
+| iconfont.cn (Alibaba) | Works, but requires manual icon selection on the website — high user friction |
+| Inline `<svg>` in template | uni-app compiler treats `<svg>` as an unknown tag; WeChat MP silently drops it |
+| `@font-face` with local `.ttf` | WXSS doesn't support `src: url()` for local file paths |
+| `@font-face` with base64-encoded TTF | WXSS base64 font support is unstable across WeChat versions |
+
+**Stable approach: pre-rendered PNG images.** Generate from a TTF using
+`fonttools` + `Pillow`:
+
+1. Extract codepoints from the TTF via `font.getBestCmap()`
+2. Render each glyph to a fixed-size PNG (e.g. 48×48) at the desired color
+3. Reference with `<image :src="iconSrc" class="icon" />` — WeChat MP's native
+   `<image>` is reliable across all versions
+4. Color variants: pre-generate separate PNGs per color, switch via `:src` based on
+   prop
+
+```bash
+# Pipeline overview
+font = TTFont('MaterialSymbolsOutlined.ttf')
+cmap = font.getBestCmap()  # glyph name → codepoint
+# Pillow ImageFont.truetype → render to PNG
+```
+
+For H5-only apps, web fonts (iconfont, Google Fonts) work fine — wrap with
+`#ifndef MP-WEIXIN`.
+
 ## References in this skill
 
 > Some references are listed in the v1.0 plan but not yet shipped as separate files. Their
@@ -490,6 +523,7 @@ with status bar handling, scroll-driven title, and WeChat capsule alignment.
 - `references/empty-state.md` — *planned*: copywriting guide for empty states (inline)
 - `references/popup-and-toast.md` — *planned*: global toasts, modals, action sheets
   (inline)
+- `references/icon-strategy.md` — *planned*: font→PNG pipeline, color variants (inline)
 
 ## Examples in this skill
 

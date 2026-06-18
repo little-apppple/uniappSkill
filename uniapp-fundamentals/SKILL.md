@@ -388,6 +388,24 @@ npm. Most uni-app plugins only work via the `uni_modules/` folder structure.
    types are good.
 10. **Don't hardcode `appid` in `manifest.json`** for the WeChat MP — use HBuilderX's
     "manifest basics" UI to avoid leaking it to git (or use `.gitignore` if hand-edited).
+11. **Don't use `app.component()` for global registration on MP** — uni-app's MP
+    compiler doesn't generate the internal `uP` property bridge for globally registered
+    components, causing `findComponentPropsData(this.properties.uP)` to crash with
+    `up.split is not a function`. Always use local import:
+    ```js
+    import Icon from '@/components/Icon.vue'
+    export default { components: { Icon } }
+    ```
+12. **Prefer Options API over `<script setup>` for component props in uni-app v3
+    alpha** — some alpha versions have bugs tracking props passed via `defineProps` in
+    `<script setup>`, causing the same `up.split is not a function` error. Use
+    `export default { props: { ... }, setup(props) { ... } }` for component props
+    until confirmed fixed in your uni-app version.
+13. **Import sources: reactivity from `vue`, page lifecycles from
+    `@dcloudio/uni-app`** — `ref`, `computed`, `reactive`, `watch` must come from
+    `'vue'`; `onLoad`, `onShow`, `onHide`, `onLaunch` must come from
+    `'@dcloudio/uni-app'`. Mixing them causes `"ref" is not exported by
+    "@dcloudio/uni-app"` at compile time.
 
 ## Resources
 

@@ -502,6 +502,27 @@ async function share(opts: { title: string; url: string }) {
    Some users mix them and wonder why nothing compiles.
 8. **No splash screen on slow devices** — users see a white flash. Set a splash with
    your brand color.
+9. **WXSS (WeChat MP) doesn't support `*` universal selector** — on MP-WEIXIN you
+    can't write `* { box-sizing: border-box }`. List element types explicitly:
+    `view, text, image, scroll-view, input, textarea { box-sizing: border-box }`.
+    Without this, `width: 100% + padding` causes horizontal overflow.
+10. **WXSS unsupported CSS features (MP-WEIXIN)** — `position: sticky`,
+    `backdrop-filter`, `env(safe-area-inset-bottom)`, and `html`/`body` selectors
+    don't work on WeChat MP. Wrap with `#ifndef MP-WEIXIN` or provide fallbacks:
+    - `position: sticky` → `position: fixed` + padding-top to reserve space
+    - `backdrop-filter` → solid `rgba()` background
+    - `env(safe-area-inset-bottom)` → CSS variable set to `0px` in MP-WEIXIN branch
+    - `html, body { ... }` → `#ifdef MP-WEIXIN` with per-element selectors instead
+11. **Component prop names intercepted by WeChat MP runtime** — `custom-style`,
+    `css-text`, and `inline-style` are intercepted by uni-app's `mp-weixin` runtime
+    (it does `.split(';')` on them for style parsing). Using any as a prop or
+    attribute triggers `up.split is not a function` (see `uniapp-debugging-and-publishing`
+    error table for the symptom). Use custom names like `color`, `variant`,
+    `customCss` instead.
+12. **`@font-face` with local `.ttf` or base64 is unreliable on MP-WEIXIN** — WXSS
+    doesn't support `src: url()` for local files, and base64 font embedding has
+    unstable compatibility across WeChat versions. Use PNG images rendered from the
+    TTF for icons on WeChat MP (see `uniapp-ui-patterns` for the icon strategy).
 
 ## References in this skill
 
