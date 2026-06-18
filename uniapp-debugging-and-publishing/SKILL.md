@@ -43,6 +43,8 @@ After loading this skill, the agent should be able to:
   (project structure + scripts)
 - "How do I debug a 401 / network error?" → `uniapp-network-layer` for the request
   layer itself; this skill for the error-decoding + devtools part
+- "Where is `cli.bat`? Help me find/auto-detect the WeChat DevTools CLI path" →
+  `uniapp-mp-automation`（提供 `mp-devtools-cli.js`，支持环境变量 / 缓存 / Windows 注册表 / 交互式输入）
 
 ## Debugging on each platform
 
@@ -226,6 +228,8 @@ For Hash mode (`/#/path`), no server config needed.
 4. Fill in the AppID (or test AppID)
 5. **Upload** (top-right) → version + notes
 6. In WeChat MP admin (https://mp.weixin.qq.com), submit the uploaded version for review
+
+> **需要 CLI 自动化？** 手工打开 DevTools 是上面这套流程；如果想让 agent / CI 自动定位 `cli.bat` 并启动/连接 DevTools，参考 `uniapp-mp-automation` 里的 [`mp-devtools-cli.js`](uniapp-mp-automation/SKILL.md#devtools-cli-路径自动检测)——支持环境变量 / 缓存 / 注册表 / 交互式输入四档回退。
 
 ### Automated (CI)
 

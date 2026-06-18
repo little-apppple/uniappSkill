@@ -176,7 +176,7 @@ uniapp-skills/
 ├── uniapp-performance/            SKILL.md
 ├── uniapp-debugging-and-publishing/  SKILL.md
 ├── uniapp-testing/                SKILL.md  (v1.1)
-├── uniapp-mp-automation/          SKILL.md  (v1.3)
+├── uniapp-mp-automation/          SKILL.md  (v1.4)
 ├── uniapp-i18n/                   SKILL.md  (v1.1)
 ├── uniapp-cloud/                  SKILL.md  (v1.1)
 ├── uniapp-payments/               SKILL.md  (v1.2)
@@ -215,6 +215,7 @@ to use, modify, and redistribute.
 | 1.2.0 | 2026-06-15 | Added 6 skills: `uniapp-payments`, `uniapp-uni-push`, `uniapp-theming`, `uniapp-migration`, `uniapp-plugin-authoring`, `uniapp-ui-libraries` — total 18 skills. Most common uni-app workflows are now covered end-to-end. |
 | 1.3.0 | 2026-06-15 | Added `uniapp-mp-automation` — automated build→launch→debug workflow via weixin-devtools-mcp MCP server. Total 19 skills. |
 | 1.4.0 | 2026-06-17 | Added `uniapp-scaffolder` — CLI scaffolder with curated registry, tag filtering, and HBuilderX marketplace fallback. Total 20 skills. |
+| 1.4.1 | 2026-06-18 | Enhanced `uniapp-mp-automation` — new `mp-devtools-cli.js` for WeChat DevTools CLI auto-detect (env / cache / registry / common paths / TTY prompt), `mp-launch.js` + `mp-debug-helper.js` wired in; documented 3 Windows pitfalls (`automator.launch()` .bat spawn fails → use `mp-launch.js` + `cli.bat auto` + `automator.connect({ wsEndpoint })`; `cli.bat open` alone does not open the debug websocket; no-GUI-session environments can only run build/verify, not 31 ops). |
 
 ## Future work
 
@@ -245,6 +246,7 @@ SKILL.md's "References / Examples" section for the planned list).
 
 **Shipped in v1.3**:
 - ✅ `uniapp-mp-automation` — automated build→launch→debug workflow via weixin-devtools-mcp MCP server
+- ✅ `uniapp-scaffolder` — CLI scaffolder with curated registry, tag filtering, and HBuilderX marketplace fallback
 
 ## Reference file state
 
@@ -252,4 +254,5 @@ In v1.0, **all content is inline in each `SKILL.md`** for self-containedness. Th
 `references/` and `examples/` paths listed in some SKILL.md files are *planned for
 v1.1* — the SKILL.md works as-is and the agent / reader should not expect those files
 to exist yet. Each SKILL.md marks planned files with a `*planned*` annotation inline.
-In v1.3, all content remains inline.
+In v1.4, all content remains inline; `uniapp-mp-automation` ships runtime scripts in
+`scripts/` but no extracted `references/` yet.

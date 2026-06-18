@@ -1,0 +1,28 @@
+{
+  "$comment": "Sample scenario config for mp-ci-debug.js. Copy to mp-debug-scenarios.json and edit. projectPath is OPTIONAL — omit it to let mp-paths.js auto-detect (unpackage/dist/build/mp-weixin → dist/build/mp-weixin → CWD).",
+  "projectPath": "./dist/build/mp-weixin",
+
+  "scenarios": [
+    {
+      "name": "homepage-renders",
+      "steps": [
+        { "label": "relaunch-home", "op": "relaunch", "args": { "url": "/pages/index/index" } },
+        { "label": "wait-content", "op": "wait_for", "args": { "selector": ".page-content", "timeout": 5000 } },
+        { "label": "check-title", "op": "query_selector", "args": { "selector": ".nav-bar-title" }, "save_as": "title" },
+        { "label": "assert-title", "op": "assert_text", "args": { "uid": "$title", "textContains": "首页" } },
+        { "label": "screenshot-home", "op": "screenshot", "args": { "path": "homepage.png" } },
+        { "label": "no-errors", "op": "assert_state", "args": { "condition": "no_console_errors" } }
+      ]
+    },
+
+    {
+      "name": "api-request-fires",
+      "steps": [
+        { "label": "goto-detail", "op": "navigate_to", "args": { "url": "/pages/detail/detail?id=1" } },
+        { "label": "wait-detail", "op": "wait_for", "args": { "selector": ".detail-content", "timeout": 5000 } },
+        { "label": "check-api", "op": "list_network_requests", "args": { "urlPattern": "/api/product/detail", "successOnly": true }, "save_as": "apiCalls" },
+        { "label": "screenshot-detail", "op": "screenshot", "args": { "path": "detail.png" } }
+      ]
+    }
+  ]
+}

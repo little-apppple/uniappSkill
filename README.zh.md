@@ -149,7 +149,7 @@ uniapp-skills/
 ├── uniapp-performance/            SKILL.md
 ├── uniapp-debugging-and-publishing/  SKILL.md
 ├── uniapp-testing/                SKILL.md  (v1.1)
-├── uniapp-mp-automation/          SKILL.md  (v1.3)
+├── uniapp-mp-automation/          SKILL.md  (v1.4)
 ├── uniapp-i18n/                   SKILL.md  (v1.1)
 ├── uniapp-cloud/                  SKILL.md  (v1.1)
 ├── uniapp-payments/               SKILL.md  (v1.2)
@@ -182,6 +182,7 @@ uniapp-skills/
 | 1.2.0 | 2026-06-15 | 新增 6 个技能：`uniapp-payments`、`uniapp-uni-push`、`uniapp-theming`、`uniapp-migration`、`uniapp-plugin-authoring`、`uniapp-ui-libraries` — 共 18 个技能。最常见的 uni-app 工作流现已全覆盖。 |
 | 1.3.0 | 2026-06-15 | 新增 `uniapp-mp-automation` — 通过 weixin-devtools-mcp MCP 服务器实现自动化构建→启动→调试工作流。共 19 个技能。 |
 | 1.4.0 | 2026-06-17 | 新增 `uniapp-scaffolder` — CLI 脚手架工具，带精选模板库、标签过滤和 HBuilderX 插件市场降级方案。共 20 个技能。 |
+| 1.4.1 | 2026-06-18 | 增强 `uniapp-mp-automation` — 新增 `mp-devtools-cli.js` 用于微信开发者工具 CLI 路径自动检测（环境变量 / 缓存 / 注册表 / 常见路径 / TTY 交互式输入），并接入 `mp-launch.js` + `mp-debug-helper.js`；新增 3 个 Windows 踩坑记录（`automator.launch()` 直接调 .bat 在 Windows 失败 → 用 `mp-launch.js` + `cli.bat auto` + `automator.connect({ wsEndpoint })` 走 HTTP 路径；`cli.bat open` 单跑不开调试 websocket；无 GUI session 环境只能跑 build/verify，跑不动 31 ops）。 |
 
 ## 未来规划
 
@@ -209,3 +210,7 @@ uniapp-skills/
 
 **v1.3 已发布：**
 - ✅ `uniapp-mp-automation` — 通过 weixin-devtools-mcp MCP 服务器实现自动化构建→启动→调试工作流
+
+**v1.4 已发布：**
+- ✅ `uniapp-scaffolder` — CLI 脚手架工具，带精选模板库、标签过滤和 HBuilderX 插件市场降级方案
+- ✅ `uniapp-mp-automation` v1.4 — DevTools CLI 路径自动检测 + 3 个 Windows 踩坑记录
