@@ -11,8 +11,9 @@ The **test layer** for uni-app. After loading this skill, the agent should be ab
 1. Set up Vitest (or Jest) for unit + component tests, with `uni.*` mocks
 2. Set up Playwright for H5 E2E
 3. MP UI automation (build → launch DevTools → assert UI → screenshot) → see
-   `uniapp-mp-automation` (MCP-driven workflow) or use `miniprogram-automator`
-   directly (covered by the sibling skill)
+   `uniapp-mp-automation` (Bash-driven workflow via `mp-debug-helper.js` daemon;
+   no MCP client required) or use `miniprogram-automator` directly (covered by
+   the sibling skill)
 4. Use `miniprogram-ci` for automated MP preview + screenshot diffs
 5. Wire tests into GitHub Actions / GitLab CI with a per-platform matrix
 6. Test on real devices for App (iOS / Android)
@@ -35,7 +36,8 @@ behavior, MP automation.
 
 - "Should I write tests first?" → `tdd` / `test-driven-development` skills
 - "How do I automate DevTools / assert UI / screenshot MP?" →
-  `uniapp-mp-automation` (MCP-driven workflow with `weixin-devtools-mcp`)
+  `uniapp-mp-automation` (Bash-driven workflow via `mp-debug-helper.js` daemon;
+  no MCP client required)
 - "How do I deploy?" → `uniapp-debugging-and-publishing`
 - "How do I structure my code for testability?" → `uniapp-state-and-data` (Pinia stores
   are easy to test) + `uniapp-network-layer` (the request wrapper is the seam for mocks)
@@ -392,10 +394,11 @@ npx playwright codegen http://localhost:5173   # record
 
 ## Mini-program automation
 
-For MCP-driven MP automation (build → launch DevTools → assert UI → screenshot →
-network inspection), load **`uniapp-mp-automation`** — it provides a complete
-workflow via `weixin-devtools-mcp` (31 MCP tools) with Claude / Cursor / VS Code
-integration and CI/CD templates.
+For Bash-driven MP automation (build → launch DevTools → assert UI → screenshot
+→ network inspection), load **`uniapp-mp-automation`** — it provides a complete
+workflow via a local helper daemon (`mp-debug-helper.js`, 31 operations called
+through Bash + curl) with no MCP client requirement and CI/CD templates
+(`mp-ci-debug.js` + scenario config).
 
 If you need a standalone Node.js script using `miniprogram-automator` directly
 (e.g., in a custom CI step), refer to `uniapp-mp-automation` for the detailed

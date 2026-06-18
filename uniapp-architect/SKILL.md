@@ -48,7 +48,7 @@ review, or when they ask "where do I start".
 | `uniapp-performance` | Startup optimization, first-screen loading, long list (`recycle-view` / `uni-list` / virtual list), image lazy-load, `subPackages` / `preloadRule`, when to use `nvue` / `uvue` / plain `vue` |
 | `uniapp-debugging-and-publishing` | H5 debug, mini-program debug, real-device debug, vConsole, common error codes, `miniprogram-ci` upload, App cloud/local build, H5 deploy, hot update (wgt/wgtu), GitHub Actions / GitLab CI for uni-app |
 | `uniapp-testing` | Vitest unit + component, Playwright on H5, miniprogram-automator on MP, real-device App QA, CI matrix |
-| `uniapp-mp-automation` | 小程序构建→启动→调试自动化，npm build，appid 确认，DevTools 启动，MCP 自动化调试（weixin-devtools-mcp），页面交互断言，网络监控，CI/CD 集成 |
+| `uniapp-mp-automation` | 小程序构建→启动→调试自动化，npm build，appid 确认，DevTools 启动，31 项操作（连接/页面/交互/断言/导航/脚本/控制台/网络/调试）通过本地 helper daemon（`mp-debug-helper.js`，Bash + curl 调用），无需 MCP 客户端，CI/CD 集成 |
 | `uniapp-i18n` | Built-in locale API, vue-i18n integration, lazy loading, RTL, server coordination |
 | `uniapp-cloud` | uniCloud functions, cloud database (JQL), cloud storage, uni-id auth, uni-cloud-router, schema permissions, deployment |
 | `uniapp-payments` | WeChat Pay (MP/H5/App), Alipay, Apple Pay, Google Pay, uni-pay plugin, refunds |
