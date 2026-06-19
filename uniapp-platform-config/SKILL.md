@@ -523,6 +523,41 @@ async function share(opts: { title: string; url: string }) {
     doesn't support `src: url()` for local files, and base64 font embedding has
     unstable compatibility across WeChat versions. Use PNG images rendered from the
     TTF for icons on WeChat MP (see `uniapp-ui-patterns` for the icon strategy).
+13. **Tab bar icons must be PNG / JPG** — the system native bottom tab bar doesn't
+    render SVG. Only raster formats (`iconPath` / `selectedIconPath` in `tabBar.list`
+    accept PNG / JPG). Put them under `static/tab/` and keep each ≤40KB for fast
+    first paint. See `uniapp-ui-patterns` for the broader icon strategy.
+14. **Native components sit on top of normal views** — `<canvas>`, `<textarea>`,
+    `<video>`, `<map>`, `<live-player>` render on a separate OS-native layer with
+    the highest z-index. Any popup / mask / drawer drawn with regular `<view>` will
+    be pierced / covered. Use `<cover-view>` / `<cover-image>` for overlays, and
+    temporarily hide the native component while the popup is shown (e.g. set
+    `v-if` off, or set the canvas to a 1×1 placeholder).
+15. **`navigationBarTextStyle` only accepts `"black"` or `"white"`** — you can't
+    use custom hex colors on the system nav bar. For arbitrary nav text color, set
+    `navigationStyle: "custom"` in `pages.json` and draw your own (see
+    `uniapp-routing-and-tabbar` custom nav bar pattern).
+16. **Custom nav bar capsule is fixed; popups need 8px clearance** — when
+    `navigationStyle: "custom"` is set, WeChat still reserves the top-right capsule
+    (menu) button at a fixed position. You cannot hide it, move it, or restyle it.
+    Popups that visually cover the capsule area may be flagged in review as
+    obscuring official back / menu controls — leave at least 8px clearance
+    around the capsule. (WeChat MP-only — Alipay/Baidu/Douyin use different
+    more-menu placements or none; don't reserve top-right space on those.)
+17. **`navigationBarTitleText` is truncated** — long titles auto-cut with
+    ellipsis. Keep ≤8 Chinese characters or ≤16 English chars. For dynamic titles,
+    use `uni.setNavigationBarTitle` with a short string.
+18. **WXSS unsupported CSS gotchas (extended)** — beyond the `*` selector and
+    `position: sticky` already listed: complex descendant selectors fail, multi-
+    background gradients have spotty support, `calc()` doesn't support all
+    expressions. Use `rpx` (750rpx = screen width) for sizing; `px` is fixed and
+    breaks multi-screen adaptation.
+19. **`rpx` / `upx` aren't recognized in native component internals on MP-WEIXIN** —
+    uni-app compiles `upx` to `rpx`, but certain native components' internal
+    config (canvas coordinates, video / live-player config, map marker offsets)
+    uses absolute `px` that bypass the rpx mapping. Size these explicitly in `px`
+    after measuring on a target device. **On App-Plus and H5, `<map>` / `<video>`
+    / `<canvas>` respect `rpx` / `upx` normally** — no special handling needed.
 
 ## References in this skill
 

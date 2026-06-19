@@ -510,6 +510,30 @@ cmap = font.getBestCmap()  # glyph name → codepoint
 For H5-only apps, web fonts (iconfont, Google Fonts) work fine — wrap with
 `#ifndef MP-WEIXIN`.
 
+## Image and static asset rules on WeChat MP
+
+Beyond icons, every static asset on MP must follow these rules:
+
+### Format and size limits
+
+| Rule | Detail |
+|---|---|
+| **Tab bar icons** | PNG / JPG only — never SVG (see "Tab bar icons must be PNG / JPG" in `uniapp-platform-config` Common mistakes #13) |
+| **webp** | Only newer WeChat versions render webp; older devices show broken image. Avoid unless you've verified the min-version target |
+| **Animated gif** | Heavy and janky; avoid in MP — use APNG / video if you need animation |
+| **Single image size** | <200KB per file in the code package; WeChat performance scan will warn over that, and cold start suffers |
+| **Large images** | Always CDN-hosted (network URL), never bundled — bundling eats into the 2MB main-package limit |
+
+### Path rules
+
+- **No absolute paths** — only project-relative paths from `static/`. No `/Users/...`
+  or `C:\...`.
+- **No `../` cross-directory references** — `<image src="../foo/bar.png">` fails
+  to resolve on MP because the package is rebuilt into a flat structure.
+- **Subpackages can't read each other's static assets** — `subPackages/A/static/`
+  is invisible to `subPackages/B/`. Share images via the main package's `static/`,
+  or via CDN.
+
 ## References in this skill
 
 > Some references are listed in the v1.0 plan but not yet shipped as separate files. Their

@@ -372,7 +372,9 @@ onShow(async () => {
 ```
 
 For MP, `onShow` fires on `switchTab` return too, so it covers all back navigation
-patterns.
+patterns. Note: `onLoad` arguments are the page's URL query params at first entry
+only — after `navigateBack`, the page re-runs `onShow` but **not** `onLoad`. If
+you need fresh params on return, read them via `getCurrentPages()` in `onShow`.
 
 ## Deep links
 
@@ -447,6 +449,32 @@ onShow((options) => {
    `uni.switchTab`: target must be a `tabBar` page.
 7. **Custom nav bar with `position: fixed`** — works, but pages need to add top padding
    equal to the nav bar's height. Or use `padding-top: var(--status-bar-height)`.
+8. **Sub-component lifecycle fires before the page** — a child component's
+   `mounted` / `created` runs before the parent page's `onLoad`. Don't rely on
+   data the page sets up in `onLoad` being available in child components'
+   `created`; use `onShow` or a Pinia store instead.
+9. **Tab page lifecycle varies by tabBar style and platform** — `switchTab`
+   behavior is not uniform:
+   - **Native tabBar on MP-WEIXIN**: tab pages are cached; the instance survives
+     `switchTab`. State, refs, and listeners persist. Use `onShow` to refresh,
+     gate one-shot init with a flag.
+   - **Custom tabBar (`tabBar.custom: true`)**: the page instance is recreated
+     on each switch; the framework re-mounts the page. Use `onLoad` / `setup`
+     for per-activation init.
+   - **H5 / App-Plus**: Vue Router / the native stack tears down and rebuilds
+     the page on `switchTab`. Lifecycle runs every time.
+10. **Custom tab bar uses ordinary `<view>` / `<image>`** — when `tabBar.custom: true`
+    the native tab bar is *replaced* by your component (not overlaid), so it
+    renders as a normal WebView region. The official WeChat custom-tab-bar demo
+    uses ordinary `<view>` / `<image>`. Reach for `<cover-view>` / `<cover-image>`
+    *only* when overlaying native components (`<map>`, `<video>`, `<canvas>`,
+    `<live-player>` on MP-WEIXIN), not for the tabBar slot itself.
+11. **URL query string length limit** — `navigateTo({ url: '/pages/x?data=...' })`
+    has a length cap (~32KB on WeChat MP, less in practice). Long payloads in
+    the URL silently truncate or fail. For large params:
+    - Use a Pinia store (cross-page global state)
+    - Or write to `uni.setStorageSync` and read on the destination page
+    - Or pass an `id` and re-fetch on the destination
 
 ## References in this skill
 
