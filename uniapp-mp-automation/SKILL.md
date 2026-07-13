@@ -500,6 +500,86 @@ node scripts/mp-debug-helper.js evaluate_script script="(() => ({ system: wx.get
 | `debug_page_elements` | `selector` (默认 "page") | `{root, tree}` | 元素树（depth ≤ 4） |
 | `debug_connection_flow` | `limit` | `{events, total}` | 连接流日志 |
 
+## 能力扩展：接入微信官方 Skills
+
+微信开发者工具官方 `miniprogram-dev-skill` 提供了本 helper daemon 未覆盖的额外能力。如果已安装官方 Skills（`wechatide` 命令可用），可以在自动化流程中直接调用以下操作来扩展调试工作流。
+
+### 预览与发布（调试后的自然延伸）
+
+自动化调试完成后，下一步通常是预览或发布：
+
+| 目标 | 官方 CLI 命令 | 说明 |
+|------|-------------|------|
+| 推送手机预览 | `wechatide -c <agent> -t auto_preview --project <dist>` | 直接推送到开发者微信，无需二维码 |
+| 生成预览二维码 | `wechatide -c <agent> -t create_preview_qrcode --project <dist> --qr-format window` | 在 DevTools 弹窗展示二维码 |
+| 上传体验版 | `wechatide -c <agent> -t miniprogram_upload --project <dist> --upload-version 1.0.0 --desc "备注"` | 上传代码包到后台 |
+
+**典型自动化扩展流程**（构建 → 调试 → 预览）：
+
+```bash
+# Step 1-3：现有流程（构建 + 调试）
+npm run build:mp-weixin
+node scripts/mp-debug-helper.js connect
+node scripts/mp-debug-helper.js wait_for selector=".page-content" timeout=5000
+node scripts/mp-debug-helper.js screenshot path="$PWD/screenshots/verify.png"
+
+# Step 4：推送手机预览（需官方 Skills）
+wechatide -c CodeBuddy -t auto_preview --project ./unpackage/dist/build/mp-weixin
+
+# 或生成二维码
+wechatide -c CodeBuddy -t create_preview_qrcode \
+  --project ./unpackage/dist/build/mp-weixin --qr-format window
+
+# Step 5：上传体验版（需官方 Skills + 用户确认弹窗）
+wechatide -c CodeBuddy -t miniprogram_upload \
+  --project ./unpackage/dist/build/mp-weixin \
+  --upload-version 1.0.0 --desc "CI 构建 #123"
+```
+
+> **注意**：`miniprogram_upload` 会触发 DevTools 确认弹窗，需用户在工具中手动确认。
+
+### 模拟器控制
+
+| 目标 | 官方 CLI 命令 | 说明 |
+|------|-------------|------|
+| 刷新模拟器 | `wechatide -c <agent> -t simulator_refresh --project <dist>` | 强制重编译刷新当前页面 |
+| 编译并打开页面 | `wechatide -c <agent> -t simulator_open_page --project <dist> --page pages/index/index` | 直接跳转到指定页面 |
+
+可在调试脚本中插入 `simulator_refresh` 来验证重编译后的页面状态：
+
+```bash
+node scripts/mp-debug-helper.js connect
+# 强制刷新模拟器
+wechatide -c CodeBuddy -t simulator_refresh --project ./unpackage/dist/build/mp-weixin
+# 等待新内容渲染
+node scripts/mp-debug-helper.js wait_for selector=".updated-content" timeout=5000
+node scripts/mp-debug-helper.js screenshot path="$PWD/screenshots/after-refresh.png"
+```
+
+### 运行时诊断
+
+| 目标 | 官方 CLI 命令 | 说明 |
+|------|-------------|------|
+| 检查 DevTools 状态 | `wechatide -c <agent> -t check_devtools_status [--skill-version <ver>]` | 确认登录态、openid、skill 版本 |
+| 清理项目缓存 | `wechatide -c <agent> -t debug_clear_cache --project <dist> --action cleanAll` | 清理编译缓存后重新调试 |
+| 读取项目设置 | `wechatide -c <agent> -t project_setting_get --project <dist>` | 查看当前编译设置 |
+| 更新项目设置 | `wechatide -c <agent> -t project_setting_update --project <dist> --settings-file ./s.json` | 修改编译设置后重新编译 |
+
+### 何时使用官方 Skills vs 本 helper
+
+| 场景 | 推荐方案 |
+|------|---------|
+| UI 交互（点击、输入、滚动） | 本 helper（31 ops 已覆盖） |
+| 页面断言、截图 | 本 helper（assert_* / screenshot） |
+| Console/Network 检查 | 本 helper（list_console_messages / list_network_requests） |
+| 构建 + appid 校验 | 本 helper（mp-verify-*.js） |
+| **推送手机预览** | **官方 Skills**（本 helper 未覆盖） |
+| **上传体验版** | **官方 Skills**（本 helper 未覆盖） |
+| **刷新模拟器** | **官方 Skills**（本 helper 未覆盖） |
+| **清理编译缓存** | **官方 Skills**（本 helper 未覆盖） |
+| **云开发操作** | 官方 Skills 或 `uniapp-cloud` skill |
+| **项目列表管理** | 官方 Skills（`project_list` / `project_import` / `project_remove`） |
+
 ## CI/CD Integration
 
 ### 场景驱动模式（推荐）
