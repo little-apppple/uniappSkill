@@ -12,11 +12,37 @@ a small set of cross-cutting decisions that the other skills depend on:
 
 1. **Framework choice** — Vue2 (legacy) vs Vue3 vs uni-app x (uvue + UTS)
 2. **Tooling choice** — HBuilderX (visual IDE) vs CLI (`vue-cli` / `vite` + `dcloudio/uni-preset-vue`)
-3. **Sub-skill routing** — which of the 17 sibling skills to load for a given task
+3. **Sub-skill routing** — which of the 19 sibling skills to load for a given task
 
 If you (the agent) already know which sub-skill applies, jump straight to it. Load this
 skill only when the user's intent is ambiguous, when they ask for an overall architecture
 review, or when they ask "where do I start".
+
+## 能力范围
+
+这个 skill 集覆盖 uni-app 开发的完整工作流：
+
+| 领域 | 覆盖内容 |
+|------|---------|
+| **项目初始化** | 脚手架搭建、Vue2/Vue3/uvue 框架选择、HBuilderX/CLI 工具链选择 |
+| **项目结构与配置** | `pages.json` / `manifest.json` / `App.vue` / `main.js` 配置、easycom、uni.scss、uni_modules |
+| **路由与导航** | 页面跳转、tabBar、自定义导航栏、页面参数、深链 |
+| **状态管理** | Pinia 集成、持久化存储、登录态管理 |
+| **网络层** | `uni.request` 封装、拦截器、401 处理、文件上传下载 |
+| **UI 模式** | 列表页、表单、骨架屏、空/错误状态、自定义导航 |
+| **多平台配置** | 微信小程序、iOS 签名、Android 权限、条件编译 |
+| **性能优化** | 启动优化、长列表、分包、nvue/uvue 选择 |
+| **调试与发布** | vConsole、DevTools、构建命令、App/MP/H5 发布、CI/CD |
+| **测试** | Vitest 单元测试、Playwright (H5)、miniprogram-automator (MP)、真机测试 |
+| **小程序自动化** | 构建后自动调试、DevTools 操作、页面交互断言、截图 |
+| **国际化** | 多语言、vue-i18n、RTL |
+| **云开发** | uniCloud 云函数、JQL 数据库、云存储、uni-id 鉴权 |
+| **支付** | 微信支付、支付宝、Apple Pay、Google Pay |
+| **推送** | uni-push 离线推送、微信订阅消息 |
+| **主题** | 亮/暗模式切换、品牌色覆盖 |
+| **迁移** | Taro/原生小程序 → uni-app、Vue2 → Vue3、Vue3 → uvue |
+| **插件开发** | uni_modules 插件结构、UTS 原生插件、发布到插件市场 |
+| **UI 库选型** | uView Plus / FirstUI / ThorUI / Wot Design Uni 等对比与集成 |
 
 ## When to use this skill
 
@@ -61,6 +87,37 @@ review, or when they ask "where do I start".
 > The pre-existing `uniapp-project` skill (component + API catalog with examples/references)
 > stays the **reference** for "how do I use component X or API Y". The 19 skills above are
 > the **workflow / pattern** layer that sits on top.
+
+## 目录结构
+
+```
+uniapp-skills/
+├── CLAUDE.md                           # 项目级入口 — agent 行为指引
+├── README.md / README.zh.md            # 安装说明、skill 目录、设计原则
+├── docs/superpowers/                   # scaffolder 设计文档 / 实现计划
+├── uniapp-architect/                   # ★ 入口 — 先加载此 skill，路由到其他子 skill
+├── uniapp-fundamentals/                # 项目结构、pages.json、manifest.json、Vue 选型
+├── uniapp-routing-and-tabbar/          # 页面导航、tabBar、自定义导航栏
+├── uniapp-state-and-data/              # Pinia、持久化、登录态
+├── uniapp-network-layer/               # uni.request 封装、拦截器
+├── uniapp-ui-patterns/                 # 列表/表单/骨架屏/空状态
+├── uniapp-platform-config/             # 多平台配置、权限、条件编译
+├── uniapp-performance/                 # 启动优化、长列表、分包
+├── uniapp-debugging-and-publishing/    # 调试、构建、发布、CI/CD
+├── uniapp-testing/                     # Vitest、Playwright、miniprogram-automator
+├── uniapp-mp-automation/               # 小程序构建→启动→调试自动化（含 scripts/）
+├── uniapp-i18n/                        # 国际化、多语言
+├── uniapp-cloud/                       # uniCloud 云函数、JQL 数据库、uni-id
+├── uniapp-payments/                    # 微信支付、支付宝、Apple/Google Pay
+├── uniapp-uni-push/                    # 离线推送、订阅消息
+├── uniapp-theming/                     # 亮/暗主题、品牌色
+├── uniapp-migration/                   # Taro/原生 MP/Vue2 → uni-app 迁移
+├── uniapp-plugin-authoring/            # uni_modules 插件开发
+├── uniapp-ui-libraries/                # 第三方 UI 库选型与集成
+└── uniapp-scaffolder/                  # Node.js CLI + 模板注册表（含 scripts/ + tests/）
+```
+
+每个子 skill 包含 `SKILL.md` 作为主体内容。`references/` 和 `examples/` 目录为计划中的拆分，目前大部分内容内联在 `SKILL.md` 中。`uniapp-mp-automation/scripts/` 和 `uniapp-scaffolder/` 是可执行代码目录。
 
 ## References in this skill
 
@@ -214,6 +271,24 @@ projects, "rewrite + port" is faster than mechanical conversion.
 **"I want to package my reusable component as a uni_modules plugin and publish it"**
 → `uniapp-plugin-authoring` — directory structure, `package.json`, `easycom.json`, UTS
 native plugins, publishing to the DCloud plugin market.
+
+## 使用约束
+
+### Agent 行为约束
+
+1. **不要同时加载所有子 skill** — 根据路由逻辑按需加载，避免 token 浪费。
+2. **当用户意图跨多个领域时**：先加载本 skill（orchestrator），再按依赖顺序依次加载相关子 skill。
+3. **当用户意图明确针对某一层时**：直接加载对应子 skill，跳过本 skill。
+4. **不要用本 skill 回答组件/API 用法** — 用 `uniapp-project` skill。
+5. **不要在本 skill 内完成具体实现** — 路由到对应子 skill 后再进行编码。
+
+### 架构约束
+
+1. **框架版本在脚手架阶段选定后不要混用** — Vue2 和 Vue3 语法不要出现在同一项目中。
+2. **不要将业务逻辑放在 `App.vue`** — 它只是应用外壳，不是服务层。
+3. **不要直接使用平台私有 API（`wx.xxx` / `my.xxx`）** — 始终通过 `uni.xxx` 编写跨平台代码。
+4. **`appid` 不要硬编码提交到 git** — 使用 HBuilderX 的 manifest UI 或 `.gitignore` 管理。
+5. **不要跳过 `pages.json` 注册直接引用页面** — 每个页面必须在 `pages` 数组中声明。
 
 ## Resources
 

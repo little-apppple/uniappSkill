@@ -20,6 +20,8 @@ After loading this skill, the agent should be able to:
 > **Why a helper daemon instead of MCP?** MCP requires client support (Claude Desktop / Cursor / Cline). The
 > helper daemon uses only Bash + curl + Node.js, so it works in **any** environment — including CI runners and
 > AI agents without MCP. The 31 operations are a 1:1 mapping of the `weixin-devtools-mcp` tool surface.
+>
+> **与微信官方 Skills 的关系**：微信开发者工具内置了 [官方 Skills](https://developers.weixin.qq.com/miniprogram/dev/devtools/Skills.html)（`miniprogram-dev-skill`），通过 `wechatide` CLI 直接调用。本 skill 的 31 个操作与官方工具的 42 个操作功能重叠但不完全一致——官方 Skills 更完整（支持云开发、项目列表管理、编译等），而本 skill 更轻量（纯 Bash+curl，无需 MCP 客户端）。建议 AI agent 优先使用官方 Skills（如果已安装），本 skill 作为无 MCP 环境下的备选方案。
 
 ## When to use this skill
 
@@ -340,6 +342,30 @@ node scripts/mp-debug-helper.js screenshot path=/tmp/homepage.png
 # 7. 用完停止
 node scripts/mp-debug-helper.js stop
 ```
+
+## 常用操作速查
+
+| 目标 | 命令 |
+|------|------|
+| 启动 daemon | `node scripts/mp-debug-helper.js start` |
+| 连接 DevTools | `node scripts/mp-debug-helper.js connect` |
+| 打开指定页面 | `node scripts/mp-debug-helper.js navigate_to url="/pages/detail/detail?id=1"` |
+| 查询页面元素 | `node scripts/mp-debug-helper.js query_selector selector=".page-title"` |
+| 点击元素 | `node scripts/mp-debug-helper.js click uid=el-1` |
+| 输入文本 | `node scripts/mp-debug-helper.js input_text uid=el-2 text="hello"` |
+| 断言文本 | `node scripts/mp-debug-helper.js assert_text uid=el-1 textContains="首页"` |
+| 等待元素出现 | `node scripts/mp-debug-helper.js wait_for selector=".content" timeout=5000` |
+| 截图 | `node scripts/mp-debug-helper.js screenshot path=/tmp/page.png` |
+| 检查 console 错误 | `node scripts/mp-debug-helper.js list_console_messages type=error` |
+| 检查网络请求 | `node scripts/mp-debug-helper.js list_network_requests urlPattern="/api/"` |
+| 执行自定义 JS | `node scripts/mp-debug-helper.js evaluate_script script="(() => getApp())()"` |
+| 停止 daemon | `node scripts/mp-debug-helper.js stop` |
+| 校验 AppID | `node scripts/mp-verify-appid.js` |
+| 校验构建产物 | `node scripts/mp-verify-build.js` |
+| 启动 DevTools | `node scripts/mp-launch.js` |
+| CI 场景执行 | `node scripts/mp-ci-debug.js --config ./scenarios.json` |
+
+> 如果已安装微信官方 Skills（`miniprogram-dev-skill`），上述操作也可通过 `wechatide -c <agentName> -t <toolName>` 完成，参见[官方文档](https://developers.weixin.qq.com/miniprogram/dev/devtools/Skills.html)。
 
 ## Common debugging scenarios
 
