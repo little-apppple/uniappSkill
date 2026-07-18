@@ -288,12 +288,18 @@ function probeDevtoolsCli() {
  * Detect the installed WeChat DevTools version by running `<cli> -v`.
  *
  * Returns null if the CLI can't be found or the version can't be parsed.
- * The version string looks like "1.06.2309250" where:
- *   major=1, minor=06, build=2309250 (YYMMDDNN release date format)
+ * WeChat DevTools has two version numbering schemes:
+ *
+ *   Classic Stable: 1.06.2309250  (major=1, minor=6, build=2309250)
+ *   Nightly Electron: 2.02.2607032  (major=2, minor=2, build=2607032)
+ *
+ * Official Skills (miniprogram-dev-skill via `wechatide` CLI) requires
+ * **Nightly Electron Build 2.02.2607032 or above** per official docs.
+ * See: https://developers.weixin.qq.com/miniprogram/dev/devtools/Skills.html
  *
  * @param {Object} [opts]
  * @param {string} [opts.cliPath]  Explicit CLI path, bypasses detection
- * @returns {Promise<Object|null>} { version, major, minor, build, officialSkillsSupported, officialSkillsStable, raw, cliPath }
+ * @returns {Promise<Object|null>} { version, major, minor, build, officialSkillsSupported, raw, cliPath }
  */
 async function detectDevtoolsVersion(opts = {}) {
   let cliPath;
@@ -321,8 +327,8 @@ async function detectDevtoolsVersion(opts = {}) {
     const raw = (output || '').trim();
     // Match version patterns:
     //   "WeChat DevTools 1.06.2309250"
-    //   "微信开发者工具 1.06.2309250"
-    //   "版本 1.06.2309250"
+    //   "微信开发者工具 2.02.2607032"
+    //   "版本 1.06.2309250""
     const match = raw.match(/(\d+)\.(\d+)\.(\d+)/);
     if (!match) return null;
 
@@ -331,12 +337,12 @@ async function detectDevtoolsVersion(opts = {}) {
     const minor = parseInt(match[2], 10);
     const build = parseInt(match[3], 10);
 
-    // Official Skills (miniprogram-dev-skill via wechatide CLI) was introduced in
-    // DevTools 1.06.23xxxxx (June 2023). Build numbers follow YYMMDDNN format.
-    // Broad check: major >= 1 && minor >= 6
-    // Stable check: build >= 230000 (June 2023 or later)
-    const officialSkillsSupported = major >= 1 && minor >= 6;
-    const officialSkillsStable = major >= 1 && minor >= 6 && build >= 230000;
+    // Official Skills (miniprogram-dev-skill via wechatide CLI) requires
+    // Nightly Electron Build 2.02.2607032 or above per:
+    // https://developers.weixin.qq.com/miniprogram/dev/devtools/Skills.html
+    const officialSkillsSupported =
+      major > 2 ||
+      (major === 2 && (minor > 2 || (minor === 2 && build >= 2607032)));
 
     return {
       version,
@@ -344,7 +350,6 @@ async function detectDevtoolsVersion(opts = {}) {
       minor,
       build,
       officialSkillsSupported,
-      officialSkillsStable,
       raw,
       cliPath,
     };
@@ -358,7 +363,7 @@ async function detectDevtoolsVersion(opts = {}) {
  * available tooling (official Skills vs miniprogram-automator).
  *
  * Decision logic:
- *   1. DevTools >= 1.06.23 AND wechatide CLI available → official_skills
+ *   1. DevTools >= 2.02.2607032 (Nightly Electron Build) AND wechatide CLI available → official_skills
  *   2. miniprogram-automator installed → automator
  *   3. Neither → none (with guidance)
  *
@@ -430,7 +435,7 @@ async function recommendApproach(opts = {}) {
   if (versionInfo && versionInfo.officialSkillsSupported && wechatideAvailable) {
     return {
       approach: 'official_skills',
-      reason: `DevTools ${versionInfo.version} supports official Skills and wechatide CLI is ${wechatideAvailable ? 'globally available' : `available at ${wechatideLocalPath}`}`,
+      reason: `DevTools ${versionInfo.version} supports official Skills (>= 2.02.2607032) and wechatide CLI is globally available`,
       versionInfo,
       wechatideAvailable,
       wechatideLocalAvailable,
@@ -445,7 +450,7 @@ async function recommendApproach(opts = {}) {
       reason: versionInfo
         ? versionInfo.officialSkillsSupported
           ? `DevTools ${versionInfo.version} supports official Skills but wechatide CLI not found; falling back to automator (npm i -D miniprogram-automator)`
-          : `DevTools ${versionInfo.version} predates official Skills stable (need >= 1.06.23); using automator via miniprogram-automator`
+          : `DevTools ${versionInfo.version} predates official Skills (need Nightly Electron Build >= 2.02.2607032); using automator via miniprogram-automator`
         : 'DevTools version not detected; falling back to automator (miniprogram-automator)',
       versionInfo,
       wechatideAvailable,

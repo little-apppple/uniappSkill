@@ -9,7 +9,7 @@ license: Complete terms in LICENSE.txt
 After loading this skill, the agent should be able to:
 
 1. **Build and verify** — run `npm run build:mp-weixin`, confirm appid injection, validate built output
-2. **Detect DevTools version and auto-select method** — run `mp-devtools-cli.js --detect-version` to detect the installed DevTools version, then automatically choose between **official Skills** (`wechatide` CLI, preferred for DevTools >= 1.06.23) and **automator** (`miniprogram-automator`, fallback for older DevTools)
+2. **Detect DevTools version and auto-select method** — run `mp-devtools-cli.js --detect-version` to detect the installed DevTools version, then automatically choose between **official Skills** (`wechatide` CLI, preferred for Nightly Electron Build >= 2.02.2607032) and **automator** (`miniprogram-automator`, fallback for older DevTools)
 3. **Launch WeChat DevTools** — open the built project in DevTools via CLI or the bundled `mp-launch.js`
 4. **Run 31 automation operations** via a local helper daemon (`mp-debug-helper.js`) — the AI sends operations via
    `node mp-debug-helper.js <op> key=value` (or raw `curl` against `http://127.0.0.1:9876/cmd`); state (connection,
@@ -48,15 +48,15 @@ After loading this skill, the agent should be able to:
 | 条件 | 说明 |
 |---|---|
 | **Node.js >= 16** | 运行 helper 和构建 |
-| **微信开发者工具 >= 1.06.23** | 已安装，并开启 **服务端口**（设置 → 安全 → 服务端口）。官方 Skills 需要此版本以上 |
+| **微信开发者工具（Nightly Electron Build >= 2.02.2607032）** | 已安装，并开启 **服务端口**（设置 → 安全 → 服务端口）。官方 Skills 需要此版本以上 |
 | **`mp-weixin.appid` 已配置** | 在 `manifest.json` 中设置，或使用测试号 |
 | **项目已初始化** | `npm install` 完成 |
-| **官方 Skills 路径（优先）** | DevTools >= 1.06.23 时自动检测 `wechatide` CLI；可通过 `mp-devtools-cli.js --detect-version` 确认版本 |
-| **`miniprogram-automator`（备选）** | `npm i -D miniprogram-automator`（helper 通过它连接 DevTools）。DevTools 版本低于 1.06.23 或无 `wechatide` 时自动选择此路径 |
+| **官方 Skills 路径（优先）** | Nightly Electron Build >= 2.02.2607032 时自动检测 `wechatide` CLI；可通过 `mp-devtools-cli.js --detect-version` 确认版本 |
+| **`miniprogram-automator`（备选）** | `npm i -D miniprogram-automator`（helper 通过它连接 DevTools）。DevTools 版本低于 2.02.2607032 或无 `wechatide` 时自动选择此路径 |
 | **任何能跑 Bash + curl 的环境** | 不需要 MCP 客户端 |
 | **（Windows）有 GUI session** | 31 ops（截图/UI 断言/网络/console）、`mp-ci-debug.js` 场景、真实点击/输入测试都需要 active Windows desktop session（有登录用户 + 窗口管理器）；无 GUI 环境下只能跑 build/verify 类步骤 |
 
-> **自动选择逻辑**：工具会自动检测 DevTools 版本——如果 >= 1.06.23 且 `wechatide` 命令可用，优先使用官方 Skills；否则回退到 `miniprogram-automator`。两种路径的操作接口保持一致（参见[Version-based method auto-selection](#version-based-method-auto-selection)）。
+> **自动选择逻辑**：工具会自动检测 DevTools 版本——如果 >= 2.02.2607032 且 `wechatide` 命令可用，优先使用官方 Skills；否则回退到 `miniprogram-automator`。两种路径的操作接口保持一致（参见[Version-based method auto-selection](#version-based-method-auto-selection)）。
 >
 > 服务端口是连接的关键：微信开发者工具 → 设置 → 安全设置 → **开启服务端口**。开启后需重启 DevTools。
 >
@@ -180,8 +180,8 @@ node scripts/mp-devtools-cli.js --detect-version
 node scripts/mp-devtools-cli.js --recommend
 # → {
 #     "approach": "official_skills",     # official_skills | automator | none
-#     "reason": "DevTools 1.06.2309250 supports official Skills...",
-#     "versionInfo": { "version": "1.06.2309250", ... },
+#     "reason": "DevTools 2.02.2607032 supports official Skills...",
+#     "versionInfo": { "version": "2.02.2607032", ... },
 #     "wechatideAvailable": true,
 #     "automatorAvailable": false
 #   }
@@ -197,7 +197,7 @@ node scripts/mp-devtools-cli.js --recommend
           ┌────────┴────────┐
           ▼                 ▼
    DevTools 版本        无法检测版本
-   >= 1.06.23?        或版本过低?
+   >= 2.02.2607032?        或版本过低?
           │                 │
       ┌───┴───┐         ┌──┴──┐
       ▼       ▼         ▼     ▼
@@ -220,7 +220,7 @@ Skills   (已安装)    (已安装)  备选工具
 
 | 维度 | 官方 Skills (`wechatide` CLI) | Automator (`miniprogram-automator`) |
 |------|------------------------------|-------------------------------------|
-| **适用版本** | DevTools >= 1.06.23 | 所有版本（含旧版） |
+| **适用版本** | Nightly Electron Build >= 2.02.2607032 | 所有版本（含旧版） |
 | **安装依赖** | DevTools 自带 `wechatide`，无需额外安装 | `npm i -D miniprogram-automator` |
 | **连接方式** | `wechatide -c <agent> -t <tool>` 直接调用 | daemon 通过 automator API 连接 DevTools |
 | **操作覆盖** | 42+ 操作（含云开发、项目管理、编译等） | 31 操作（UI 交互、断言、console/network） |
@@ -235,9 +235,9 @@ Skills   (已安装)    (已安装)  备选工具
 
 | 场景 | 推荐方式 | 原因 |
 |------|---------|------|
-| DevTools >= 1.06.23 + `wechatide` 可用 | **官方 Skills** | 功能最完整，无需额外依赖 |
-| DevTools >= 1.06.23 + 无 `wechatide` + automator 已装 | **Automator** | 自动回退，不影响开发 |
-| DevTools < 1.06.23 + automator 已装 | **Automator** | 官方 Skills 不可用 |
+| Nightly Electron Build >= 2.02.2607032 + `wechatide` 可用 | **官方 Skills** | 功能最完整，无需额外依赖 |
+| Nightly Electron Build >= 2.02.2607032 + 无 `wechatide` + automator 已装 | **Automator** | 自动回退，不影响开发 |
+| 版本 < 2.02.2607032 + automator 已装 | **Automator** | 官方 Skills 不可用 |
 | 首次运行，工具未安装 | 按提示安装 automator | `npm i -D miniprogram-automator` |
 | CI 环境 | **根据环境决定** | 有 GUI 用 automator，无 GUI 只做 build/verify |
 
@@ -374,10 +374,10 @@ node scripts/mp-devtools-cli.js --recommend
 {
   "ok": true,
   "approach": "official_skills",
-  "reason": "DevTools 1.06.2309250 supports official Skills and wechatide CLI is available",
+  "reason": "DevTools 2.02.2607032 supports official Skills (>= 2.02.2607032) and wechatide CLI is globally available",
   "versionInfo": {
-    "version": "1.06.2309250",
-    "major": 1, "minor": 6, "build": 2309250,
+    "version": "2.02.2607032",
+    "major": 2, "minor": 2, "build": 2607032,
     "officialSkillsSupported": true,
     "cliPath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat"
   },
@@ -392,7 +392,7 @@ node scripts/mp-devtools-cli.js --recommend
 {
   "ok": true,
   "approach": "automator",
-  "reason": "DevTools 1.06.2204110 predates official Skills stable (need >= 1.06.23); using automator via miniprogram-automator",
+  "reason": "DevTools 1.05.2204110 predates official Skills (need Nightly Electron Build >= 2.02.2607032); using automator via miniprogram-automator",
   "versionInfo": { "version": "1.06.2204110", "officialSkillsSupported": false, ... },
   "automatorAvailable": true
 }
@@ -1112,7 +1112,7 @@ jobs:
 ## Common mistakes
 
 1. **服务端口未开启** — `connect` 失败时，先检查微信开发者工具 → 设置 → 安全 → 服务端口是否开启，**重启 DevTools**。
-2. **DevTools 版本过低** — 旧版 DevTools 可能不支持自动化接口。运行 `node scripts/mp-devtools-cli.js --detect-version` 确认版本，若低于 1.06.23 则更新 DevTools 到最新稳定版。
+2. **DevTools 版本过低** — 旧版 DevTools 可能不支持自动化接口。运行 `node scripts/mp-devtools-cli.js --detect-version` 确认版本，若低于 2.02.2607032 则更新到 Nightly Electron Build 以获得官方 Skills 支持。
 3. **appid 不匹配** — `manifest.json` 与 `project.config.json` 不一致。运行 `node scripts/mp-verify-appid.js` 检查。
 4. **未重启 DevTools 就用新构建** — 构建后需 `node scripts/mp-launch.js` 重新打开项目（或手动切换）才能加载新代码。
 5. **端口 9876 被占用** — 用 `MP_DEBUG_PORT=9877 node scripts/mp-debug-helper.js start` 改端口。
@@ -1136,7 +1136,7 @@ jobs:
     `mp-launch.js` 已经处理好 `cmd.exe /c` 的 Windows .bat 调用，所以日常启动用 `mp-launch.js` 即可；只有当 `automator.launch()` 路径本身出问题（罕见）才需要上面这套手动命令。
 15. **`cli.bat open` 不够，必须再跑 `cli.bat auto`** — `open` 只起 IDE 的 HTTP 服务，调试 websocket 不会打开。automator 连上后 `currentPage` / `reLaunch` / `pageStack` 全部 hang。**必须**再跑 `cli.bat auto --project <path> --auto-port 9420 --trust-project` 才能激活 webview debugger。`mp-launch.js` 默认的 `open` 子命令只完成了第一步；要直接走 automator 路径，推荐手动两步（见 #14）。
 16. **无 GUI session 的环境跑不动真实 MP 自动化** — DevTools 需要 active Windows desktop session 才能起模拟器 webview。Windows Server / RDP / WSL 等无 console session 环境下，DevTools 进程能跑、HTTP 端口能 listen、websocket 能连，但 webview 不渲染，所有 `currentPage` / `reLaunch` / `pageStack` 操作都会 hang。判定方法：`tasklist /v | findstr wechat` 看进程窗口标题，没有项目窗口标题就是没起来。**这种环境下只能跑**：MP build (`npm run build:mp-weixin`)、`mp-verify-build.js` 构建产物完整性、`mp-verify-appid.js` appid 校验、Vitest/Playwright 等其他层测试。**必须在用户的本地 GUI 机器跑**：31 ops（截图/UI 断言/网络/console）、`mp-ci-debug.js` 场景、真实点击/输入测试。
-17. **`wechatide` 命令不可用** — 即使 DevTools >= 1.06.23，`wechatide` CLI 也可能未注册到 PATH。运行 `node scripts/mp-devtools-cli.js --recommend` 检查状态，如 `wechatideAvailable` 为 false 则走 automator 回退。
+17. **`wechatide` 命令不可用** — 即使 DevTools >= 2.02.2607032，`wechatide` CLI 也可能未注册到 PATH。运行 `node scripts/mp-devtools-cli.js --recommend` 检查状态，如 `wechatideAvailable` 为 false 则走 automator 回退。
 18. **忘记先做版本检测就直接启动 helper** — 新版流程要求 **先做版本检测**（`--detect-version` 或 `--recommend`）再选择调试方法。跳过此步可能导致选择了不适配的方法。
 19. **console 出现 error 但未分析直接跳过** — 违反 [4-Check 原则](#e2e-debugging-methodology必读) 的 Check 1。console error 必须分析根因并修复，不能跳过。常见情况：`request:fail` 需要配置域名白名单或设置 `urlCheck: false`。
 20. **截图后未人工确认视觉样式** — 违反 Check 3 原则。截图必须打开文件确认布局、颜色、间距等视觉要素正常。
