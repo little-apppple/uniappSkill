@@ -1,6 +1,6 @@
 ---
 name: uniapp-mp-automation
-description: "WeChat Mini Program automated build + debug workflow — npm build, verify appid, launch WeChat DevTools, and run 31 automation operations (connect / page / interaction / assertion / navigation / script / console / network / debug) through a local helper daemon (mp-debug-helper.js) that AI drives via Bash + curl. No MCP server required. Use when the user wants to automate the build→launch→debug cycle, write E2E scripts for mini-programs, or integrate DevTools automation into CI. Do NOT use for manual DevTools debugging (use uniapp-debugging-and-publishing) or Vitest/Playwright unit testing (use uniapp-testing)."
+description: "WeChat Mini Program automated build + debug workflow with version-based auto-selection between official Skills (wechatide CLI) and automator (miniprogram-automator). Covers npm build, appid verify, DevTools launch, 31 automation ops via helper daemon, and enriched E2E methodology requiring console/view/style checks at every step. No MCP server required. Use when the user wants to automate the build→launch→debug cycle, write E2E scripts for mini-programs, or integrate DevTools automation into CI. Do NOT use for manual DevTools debugging (use uniapp-debugging-and-publishing) or Vitest/Playwright unit testing (use uniapp-testing)."
 license: Complete terms in LICENSE.txt
 ---
 
@@ -9,12 +9,13 @@ license: Complete terms in LICENSE.txt
 After loading this skill, the agent should be able to:
 
 1. **Build and verify** — run `npm run build:mp-weixin`, confirm appid injection, validate built output
-2. **Launch WeChat DevTools** — open the built project in DevTools via CLI or the bundled `mp-launch.js`
-3. **Run 31 automation operations** via a local helper daemon (`mp-debug-helper.js`) — the AI sends operations via
+2. **Detect DevTools version and auto-select method** — run `mp-devtools-cli.js --detect-version` to detect the installed DevTools version, then automatically choose between **official Skills** (`wechatide` CLI, preferred for DevTools >= 1.06.23) and **automator** (`miniprogram-automator`, fallback for older DevTools)
+3. **Launch WeChat DevTools** — open the built project in DevTools via CLI or the bundled `mp-launch.js`
+4. **Run 31 automation operations** via a local helper daemon (`mp-debug-helper.js`) — the AI sends operations via
    `node mp-debug-helper.js <op> key=value` (or raw `curl` against `http://127.0.0.1:9876/cmd`); state (connection,
    page reference, console/network buffers) persists across calls
-4. **Assert and verify** — UI text, element state, console errors, network requests, screenshots
-5. **CI/CD integration** — `mp-ci-debug.js` runs a scenario config in pure Node.js (no AI agent required); works
+5. **Assert and verify with E2E methodology** — at every step, check console errors, view-layer errors, and unexpected rendering styles; confirm each finding before proceeding
+6. **CI/CD integration** — `mp-ci-debug.js` runs a scenario config in pure Node.js (no AI agent required); works
    in GitHub Actions
 
 > **Why a helper daemon instead of MCP?** MCP requires client support (Claude Desktop / Cursor / Cline). The
@@ -47,16 +48,19 @@ After loading this skill, the agent should be able to:
 | 条件 | 说明 |
 |---|---|
 | **Node.js >= 16** | 运行 helper 和构建 |
-| **微信开发者工具** | 已安装，并开启 **服务端口**（设置 → 安全 → 服务端口） |
+| **微信开发者工具 >= 1.06.23** | 已安装，并开启 **服务端口**（设置 → 安全 → 服务端口）。官方 Skills 需要此版本以上 |
 | **`mp-weixin.appid` 已配置** | 在 `manifest.json` 中设置，或使用测试号 |
 | **项目已初始化** | `npm install` 完成 |
-| **`miniprogram-automator`** | `npm i -D miniprogram-automator`（helper 通过它连接 DevTools） |
+| **官方 Skills 路径（优先）** | DevTools >= 1.06.23 时自动检测 `wechatide` CLI；可通过 `mp-devtools-cli.js --detect-version` 确认版本 |
+| **`miniprogram-automator`（备选）** | `npm i -D miniprogram-automator`（helper 通过它连接 DevTools）。DevTools 版本低于 1.06.23 或无 `wechatide` 时自动选择此路径 |
 | **任何能跑 Bash + curl 的环境** | 不需要 MCP 客户端 |
 | **（Windows）有 GUI session** | 31 ops（截图/UI 断言/网络/console）、`mp-ci-debug.js` 场景、真实点击/输入测试都需要 active Windows desktop session（有登录用户 + 窗口管理器）；无 GUI 环境下只能跑 build/verify 类步骤 |
 
+> **自动选择逻辑**：工具会自动检测 DevTools 版本——如果 >= 1.06.23 且 `wechatide` 命令可用，优先使用官方 Skills；否则回退到 `miniprogram-automator`。两种路径的操作接口保持一致（参见[Version-based method auto-selection](#version-based-method-auto-selection)）。
+>
 > 服务端口是连接的关键：微信开发者工具 → 设置 → 安全设置 → **开启服务端口**。开启后需重启 DevTools。
 >
-> **`miniprogram-automator` 路径**：helper 自身不带 `node_modules`。如果从 skill 目录直接跑，要在用户的 uni-app 项目里装 `miniprogram-automator` 并用 `NODE_PATH=<项目根>/node_modules` 指过去，否则 `connect` 报 `miniprogram_automator_not_installed`。
+> **`miniprogram-automator` 路径**：helper 自身不带 `node_modules`。如果从 skill 目录直接跑，要在用户的 uni-app 项目里装 `miniprogram-automator` 并用 `NODE_PATH=<项目根>/node_modules` 指过去，否则 `connect` 报 `miniprogram_automator_not_installed`。当选择官方 Skills 路径时无需安装此包。
 >
 > **DevTools 安装位置**：自动检测会扫 `C:/Program Files (x86)/Tencent/微信web开发者工具`、`C:/Program Files/Tencent/...`、`%LOCALAPPDATA%/Programs/...`、Windows 注册表。装在 D 盘或其他自定义位置的，设 `WECHAT_DEVTOOLS_CLI` 环境变量或在 TTY 中按提示输入路径。详见 [DevTools CLI 路径自动检测](#devtools-cli-路径自动检测)。
 
@@ -162,19 +166,116 @@ node scripts/mp-debug-helper.js connect
 #   }
 ```
 
+## Version-based method auto-selection
+
+本 skill **不再默认使用 `miniprogram-automator`**。每次调试会话开始时，自动检测微信开发者工具版本，根据版本和能力选择合适的调试方式。
+
+### 检测命令
+
+```bash
+# 检测 DevTools 版本（不提示，不抛错）
+node scripts/mp-devtools-cli.js --detect-version
+
+# 推荐调试方式（综合版本 + 已安装的工具）
+node scripts/mp-devtools-cli.js --recommend
+# → {
+#     "approach": "official_skills",     # official_skills | automator | none
+#     "reason": "DevTools 1.06.2309250 supports official Skills...",
+#     "versionInfo": { "version": "1.06.2309250", ... },
+#     "wechatideAvailable": true,
+#     "automatorAvailable": false
+#   }
+```
+
+### 自动选择决策树
+
+```
+┌─────────────────────────────────────────┐
+│  Detecting: --detect-version            │
+└──────────────────┬──────────────────────┘
+                   │
+          ┌────────┴────────┐
+          ▼                 ▼
+   DevTools 版本        无法检测版本
+   >= 1.06.23?        或版本过低?
+          │                 │
+      ┌───┴───┐         ┌──┴──┐
+      ▼       ▼         ▼     ▼
+   wechatide  no       auto-   npm i -D
+   可用?     wechatide  mator  miniprogram-
+      │         │     可用?   automator
+  ┌───┴───┐     │         │
+  ▼       ▼     ▼     ┌───┴───┐
+官方     automator   automator 请安装
+Skills   (已安装)    (已安装)  备选工具
+(首选)    可用?       可用?
+             │
+         ┌───┴───┐
+         ▼       ▼
+       automator  缺少依赖
+       调试可用   请安装
+```
+
+### 两种方式对比
+
+| 维度 | 官方 Skills (`wechatide` CLI) | Automator (`miniprogram-automator`) |
+|------|------------------------------|-------------------------------------|
+| **适用版本** | DevTools >= 1.06.23 | 所有版本（含旧版） |
+| **安装依赖** | DevTools 自带 `wechatide`，无需额外安装 | `npm i -D miniprogram-automator` |
+| **连接方式** | `wechatide -c <agent> -t <tool>` 直接调用 | daemon 通过 automator API 连接 DevTools |
+| **操作覆盖** | 42+ 操作（含云开发、项目管理、编译等） | 31 操作（UI 交互、断言、console/network） |
+| **预览/发布** | 原生支持（`auto_preview`、`miniprogram_upload`） | 不支持 |
+| **模拟器刷新** | 原生支持（`simulator_refresh`） | 不支持（需重启 DevTools） |
+| **UI 交互断言** | 部分支持 | 完整支持（点击、输入、断言、截图） |
+| **console/network** | 部分支持 | 完整支持（列表、过滤、详情） |
+| **CI 支持** | 需要 `wechatide` 全局安装 | 纯 Node.js，无额外依赖 |
+| **自动化粒度** | 工具级（ops 由 DevTools 执行） | 元素级（精细控制单个组件） |
+
+### 推荐策略
+
+| 场景 | 推荐方式 | 原因 |
+|------|---------|------|
+| DevTools >= 1.06.23 + `wechatide` 可用 | **官方 Skills** | 功能最完整，无需额外依赖 |
+| DevTools >= 1.06.23 + 无 `wechatide` + automator 已装 | **Automator** | 自动回退，不影响开发 |
+| DevTools < 1.06.23 + automator 已装 | **Automator** | 官方 Skills 不可用 |
+| 首次运行，工具未安装 | 按提示安装 automator | `npm i -D miniprogram-automator` |
+| CI 环境 | **根据环境决定** | 有 GUI 用 automator，无 GUI 只做 build/verify |
+
+> 两种方式的切换对用户透明：所有 E2E 步骤的操作接口保持一致（console 检查、view 层检查、样式检查、截图验证），底层自动路由到对应的实现。
+
 ## Workflow overview
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  校验 AppID  │ ──→ │  npm run build:  │ ──→ │  启动 DevTools  │ ──→ │  启动 helper   │ ──→ │  发送 ops       │
-│  verify-    │     │  mp-weixin       │     │  mp-launch.js  │     │  daemon (Bash) │     │  Bash + curl    │
-│  appid.js   │     │  verify-build.js │     │                │     │  :9876         │     │  state 持久     │
-└─────────────┘     └──────────────────┘     └────────────────┘     └─────────────────┘     └─────────────────┘
-                                                                                              ↓
-                                                                                       screenshots / report
+┌─────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────────┐
+│  ① 校验 AppID │ ──→ │  ② npm run build: │ ──→ │  ③ 版本检测+方法选择 │ ──→ │  ④ 启动 DevTools      │
+│  verify-    │     │  mp-weixin       │     │  --detect-version │     │  mp-launch.js        │
+│  appid.js   │     │  verify-build.js │     │  --recommend      │     │  或用 wechatide 启动  │
+└─────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────────┘
+                                                                                  │
+                                                                          ┌───────┴───────┐
+                                                                          ▼               ▼
+                                                                   ┌────────────┐  ┌──────────────┐
+                                                                   │ 官方 Skills  │  │ Helper Daemon│
+                                                                   │ wechatide   │  │  automator   │
+                                                                   │ 直接调用 ops  │  │  :9876        │
+                                                                   └──────┬──────┘  └──────┬─────────┘
+                                                                          │               │
+                                                                          └───────┬───────┘
+                                                                                  │
+                                                                                  ▼
+                                                                   ┌─────────────────────────────┐
+                                                                   │  ⑤ 执行 ops + E2E 检查      │
+                                                                   │  每步：console 检查         │
+                                                                   │        view 层错误检查      │
+                                                                   │        样式异常检查         │
+                                                                   │        确认修复             │
+                                                                   └──────────┬──────────────────┘
+                                                                                  │
+                                                                                  ▼
+                                                                           screenshots / report
 ```
 
-整个流程可一键执行（CI 模式），也可拆解为 AI 在对话中逐步调用。
+整个流程可一键执行（CI 模式），也可拆解为 AI 在对话中逐步调用。**区别在于第③步之后的选择**：自动检测版本后选择官方 Skills 路径或 automator 路径，后续的 E2E 检查流程完全一致。
 
 ## Step 1: Confirm AppID
 
@@ -258,7 +359,71 @@ node scripts/mp-launch.js --no-interactive         # 不要弹提示（CI / agen
 
 CLI 还支持 `preview`（预览二维码）、`upload`（上传）等子命令，需要时直接调用即可，helper 不强制介入。
 
-## Step 4: Start the helper daemon
+## Step 4: Version detection and method selection
+
+在启动 helper 之前，先检测 DevTools 版本，自动选择合适的调试方式：
+
+```bash
+# 检测版本并获取推荐方式
+node scripts/mp-devtools-cli.js --recommend
+```
+
+输出示例（官方 Skills 可用）：
+
+```json
+{
+  "ok": true,
+  "approach": "official_skills",
+  "reason": "DevTools 1.06.2309250 supports official Skills and wechatide CLI is available",
+  "versionInfo": {
+    "version": "1.06.2309250",
+    "major": 1, "minor": 6, "build": 2309250,
+    "officialSkillsSupported": true,
+    "cliPath": "C:\\Program Files (x86)\\Tencent\\微信web开发者工具\\cli.bat"
+  },
+  "wechatideAvailable": true,
+  "automatorAvailable": false
+}
+```
+
+输出示例（automator 回退）：
+
+```json
+{
+  "ok": true,
+  "approach": "automator",
+  "reason": "DevTools 1.06.2204110 predates official Skills stable (need >= 1.06.23); using automator via miniprogram-automator",
+  "versionInfo": { "version": "1.06.2204110", "officialSkillsSupported": false, ... },
+  "automatorAvailable": true
+}
+```
+
+根据 `approach` 字段走不同路径：
+
+**路径 A：官方 Skills**（`approach: "official_skills"`）
+
+```bash
+# 直接使用 wechatide CLI 执行操作
+wechatide -c CodeBuddy -t connect --project ./dist/build/mp-weixin
+wechatide -c CodeBuddy -t query_selector --selector ".page-content"
+wechatide -c CodeBuddy -t screenshot --path /tmp/page.png
+```
+
+**路径 B：Automator Helper**（`approach: "automator"`）
+
+```bash
+# 启动 helper daemon
+node scripts/mp-debug-helper.js start
+node scripts/mp-debug-helper.js connect
+```
+
+> 如果 `approach` 为 `none`，按提示安装缺少的依赖：`npm i -D miniprogram-automator` 或更新 DevTools 到最新版。
+>
+> 对于 CI 环境或无 GUI session 的场景，即使检测到 automator，也只执行 build/verify 类步骤，不执行 UI 自动化操作。
+
+## Step 5: Start the helper daemon（automator 路径）
+
+如果选择了 automator 路径（approach: `"automator"`），启动 helper daemon：
 
 ```bash
 node scripts/mp-debug-helper.js start
@@ -279,7 +444,173 @@ Daemon 做的事：
 
 > 如果 9876 端口被占用，设置 `MP_DEBUG_PORT=9877 node scripts/mp-debug-helper.js start`。
 
-## Step 5: Send operations
+---
+
+## E2E Debugging Methodology（必读）
+
+每次 E2E 调试步骤都必须执行一套**系统性检查**，确保页面质量。这是本 skill 的核心方法论，**不是可选步骤**。
+
+### 4-Check 原则
+
+每个自动化操作（页面跳转、点击、输入、等待等）执行后，必须进行以下四项检查，确认无误后再继续下一步：
+
+```
+┌─────────────────────────────────────────────┐
+│             自动化操作执行完毕                  │
+└──────────────────┬──────────────────────────┘
+                   │
+          ┌────────┴────────┐          ┌─────────────────────────┐
+          ▼                 ▼          │  ✅ 通过 → 继续下一步    │
+   ┌────────────┐    ┌────────────┐    │  ❌ 失败 → 分析并修复    │
+   │  Check 1   │    │  Check 2   │    └─────────────────────────┘
+   │ Console    │    │ View 层    │
+   │ 错误检查    │    │ 错误检查    │
+   └──────┬─────┘    └──────┬─────┘
+          │                 │
+          └────────┬────────┘
+                   ▼
+          ┌────────────────┐
+          │   Check 3      │
+          │   Rendering    │
+          │   Style 检查   │
+          └───────┬────────┘
+                  │
+                  ▼
+          ┌────────────────┐
+          │   Check 4      │
+          │   Confirm      │
+          │   & Fix        │
+          └────────────────┘
+```
+
+### Check 1：Console 错误检查
+
+**目标**：确保页面没有 JavaScript 运行时错误、API 调用失败、资源加载异常。
+
+```bash
+# 检查所有 console error
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → {"ok":true,"data":{"count":0,"messages":[]}}   ← ✅ 无错误
+
+# 如果有错误，获取详细信息
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → {"ok":true,"data":{"count":2,"messages":[
+#     {"id":1,"type":"error","args":["Cannot read property 'xxx' of undefined"]},
+#     {"id":2,"type":"error","args":["request:fail url not in domain list"]}
+#   ]}}
+```
+
+**处理方式**：
+| 错误类型 | 常见原因 | 处理方式 |
+|---------|---------|---------|
+| `TypeError: Cannot read property` | 数据未加载就渲染 | 检查数据源、添加 `v-if` 守卫 |
+| `request:fail` | 域名未配置白名单 | 在 `manifest.json` 中配置 `mp-weixin.setting.urlCheck: false`（开发期） |
+| `url not in domain list` | 请求域名未在后台配置 | 登录小程序后台配置合法域名，或开发期关闭 urlCheck |
+| `渲染层错误` | WXML 模板问题 | 检查条件渲染逻辑 |
+| `analyze:fail` | 分包路径错误 | 检查 `subPackages` 配置 |
+| `Component is not found` | 组件路径错误 | 检查组件的 `usingComponents` 路径 |
+
+**关键**：console 有 error 就必须**分析根因并修复**，不能跳过继续执行后续步骤。
+
+### Check 2：View 层错误检查
+
+**目标**：检查小程序渲染层（View Layer）是否有 WXML/WXSS 层面的报错。微信小程序的渲染层和逻辑层是分离的，有些错误不会出现在 console 中，而是在渲染层报错。
+
+```bash
+# 使用 evaluate_script 检查渲染状态
+node scripts/mp-debug-helper.js evaluate_script script="(() => ({
+  systemInfo: wx.getSystemInfoSync(),
+  isConnected: !!getApp(),
+  pageStack: getCurrentPages().length
+}))()"
+# → 检查返回值是否正常
+
+# 断言系统状态 —— 综合判断
+node scripts/mp-debug-helper.js assert_state condition=no_console_errors
+# → {"ok":true,"data":{"passed":true,"condition":"no_console_errors","consoleErrors":0}}
+```
+
+**需要关注的 View 层异常信号**：
+- 页面空白或部分空白（检查是否有 WXML 渲染异常）
+- 滚动卡顿（检查是否有无限 `setData` 或复杂 WXML 结构）
+- 组件未显示（检查 `usingComponents` 是否正确注册）
+- `setData` 数据过大（单次 setData 超过 1MB 会使渲染层卡死）
+
+```bash
+# 检查页面元素树（诊断渲染问题）
+node scripts/mp-debug-helper.js debug_page_elements selector="page"
+# → 查看页面 root 元素下是否有异常结构（空节点、多余嵌套等）
+```
+
+### Check 3：Rendering Style 检查
+
+**目标**：检查页面是否有样式异常（非预期呈现风格）。样式问题不会抛 error，但影响用户体验。
+
+**检查手段**：
+
+```bash
+# 1. 截图确认视觉呈现
+node scripts/mp-debug-helper.js screenshot path=/tmp/page-state.png
+
+# 2. 关键 UI 元素断言（文本、可见性）
+node scripts/mp-debug-helper.js query_selector selector=".page-title"
+node scripts/mp-debug-helper.js assert_text uid=el-1 textContains="预期标题"
+node scripts/mp-debug-helper.js assert_state uid=el-1 condition=visible
+
+# 3. 查询元素属性确认样式
+node scripts/mp-debug-helper.js query_selector selector=".nav-bar"
+# → 检查 attributes.style 是否存在异常
+```
+
+**需要关注的 Style 异常**：
+| 异常表现 | 可能原因 |
+|---------|---------|
+| 文字重叠/溢出 | `flex` 布局未正确适配，或 `text-overflow` 缺失 |
+| 元素错位/偏移 | rpx 计算问题，或使用了固定 px |
+| 颜色不一致 | 自定义主题色未正确应用，或使用了硬编码颜色 |
+| 字体大小异常 | 全局 font-size 被意外覆盖 |
+| 图片显示异常 | `mode` 属性设置不当，或图片 CDN 问题 |
+| 安全区域不适配 | 未适配 iPhone X 以上机型的安全区域（`safe-area-inset-*`） |
+| 深色模式异常 | 未适配 dark mode 或使用了不透明明亮背景色 |
+
+**截图验证清单**：
+- 页面是否完整呈现（顶部导航、底部 tabBar、主要内容区）
+- 各区块间距是否正常（padding/margin）
+- 字体、颜色是否符合设计稿
+- 图片是否正常加载并正确裁剪
+- 交互元素（按钮、输入框）是否可识别
+
+### Check 4：Confirm & Fix
+
+**目标**：确认上述检查通过，或修复后重新验证。
+
+```bash
+# 确认所有检查通过
+node scripts/mp-debug-helper.js diagnose_connection
+# → 检查 issues 数组是否为空
+
+# 重新截图做最终验证
+node scripts/mp-debug-helper.js screenshot path=/tmp/final-verify.png
+```
+
+**修复循环**：
+
+```
+发现错误 → 分析根因 → 修复代码 → 重新构建(build:mp-weixin)
+→ 重启 DevTools(mp-launch.js) → 重新执行步骤 → 重新检查(console/view/style)
+→ 确认通过 → 继续下一步
+```
+
+**修复后必须重新验证的步骤**：
+1. `npm run build:mp-weixin` 重新构建
+2. `node scripts/mp-launch.js` 重新打开 DevTools
+3. 重新执行操作的导航/交互
+4. 重新执行 4-Check（console / view / style / confirm）
+5. 确认无问题后再继续
+
+---
+
+## Step 6: Send operations with E2E methodology
 
 两种调用方式，效果一致：
 
@@ -315,7 +646,7 @@ curl -sS -X POST http://127.0.0.1:9876/cmd \
 
 每次 `query_selector` 返回的 `uid`（如 `el-1`）缓存在 daemon 进程内，后续 `click` / `input_text` / `assert_text` 等通过 uid 引用。**每次 Bash 调用拿到的 uid 在同 daemon 内跨调用有效**——这是 helper 与一次性脚本的核心差异。
 
-### 典型完整流程
+### 典型完整流程（含 E2E 方法论检查）
 
 ```bash
 # 1. 连接（自动探测构建产物路径）
@@ -325,21 +656,40 @@ node scripts/mp-debug-helper.js connect
 node scripts/mp-debug-helper.js current_page
 # → {"ok":true,"data":{"path":"pages/index/index","query":{},"uid":"el-1"}}
 
-# 3. 查询元素（拿到 uid）
+# ===== Check 1: Console 错误检查 =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → {"ok":true,"data":{"count":0,"messages":[]}}    ← ✅ 无错误
+
+# ===== Check 3: 截图确认样式 =====
+node scripts/mp-debug-helper.js screenshot path=/tmp/homepage.png
+# → 人工确认样式无误
+
+# 3. 查询页面标题元素（拿到 uid）
 node scripts/mp-debug-helper.js query_selector selector=".nav-bar-title"
 # → {"ok":true,"data":{"uid":"el-2","tagName":"view","text":"首页","attributes":{"class":"nav-bar-title"}}}
 
 # 4. 断言 UI 文本
 node scripts/mp-debug-helper.js assert_text uid=el-2 textContains="首页"
+# → {"ok":true,"data":{"passed":true}}               ← ✅ 文本正确
 
-# 5. 检查控制台错误
+# 5. 导航到详情页
+node scripts/mp-debug-helper.js navigate_to url="/pages/detail/detail?id=1"
+# ===== Check 1: 导航后检查 Console =====
 node scripts/mp-debug-helper.js list_console_messages type=error
-# → {"ok":true,"data":{"count":0,"messages":[]}}
+# → {"ok":true,"data":{"count":0,"messages":[]}}    ← ✅ 导航无错误
 
-# 6. 截图
-node scripts/mp-debug-helper.js screenshot path=/tmp/homepage.png
+# ===== Check 2: 检查页面元素正常渲染 =====
+node scripts/mp-debug-helper.js wait_for selector=".detail-content" timeout=5000
+# → {"ok":true,"data":{"found":true,"uid":"el-3"}}  ← ✅ 内容正常加载
 
-# 7. 用完停止
+# ===== Check 3: 截图确认详情页样式 =====
+node scripts/mp-debug-helper.js screenshot path=/tmp/detail-page.png
+
+# ===== Check 4: 确认所有检查通过 =====
+node scripts/mp-debug-helper.js assert_state condition=no_console_errors
+# → {"ok":true,"data":{"passed":true,"consoleErrors":0}}
+
+# 6. 用完停止
 node scripts/mp-debug-helper.js stop
 ```
 
@@ -367,57 +717,138 @@ node scripts/mp-debug-helper.js stop
 
 > 如果已安装微信官方 Skills（`miniprogram-dev-skill`），上述操作也可通过 `wechatide -c <agentName> -t <toolName>` 完成，参见[官方文档](https://developers.weixin.qq.com/miniprogram/dev/devtools/Skills.html)。
 
-## Common debugging scenarios
+## Common debugging scenarios（含 E2E 方法论）
+
+以下每个场景都按照 **4-Check 原则** 编写：操作执行后立即检查 console、view 层、样式，确认通过后再继续。
 
 ### 场景 1：验证构建页面正常渲染
 
 ```bash
 node scripts/mp-debug-helper.js connect
+
+# Navigate 到首页
+node scripts/mp-debug-helper.js relaunch url="/pages/index/index"
 node scripts/mp-debug-helper.js wait_for     selector=".page-content" timeout=5000
+
+# ===== Check 1: Console 错误检查 =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → count=0 ✅ 无错误
+
+# ===== Check 2: View 层检查 =====
+node scripts/mp-debug-helper.js debug_page_elements selector="page"
+# → 确认 root 元素有正常子节点，无异常空结构
+
+# ===== Check 3: 样式检查 =====
 node scripts/mp-debug-helper.js query_selector selector=".nav-bar-title"
-# → 记录返回的 uid，下一步用
 node scripts/mp-debug-helper.js assert_text  uid=el-2 textContains="首页"
+node scripts/mp-debug-helper.js assert_state uid=el-2 condition=visible
+# → 标题可见 ✅
 node scripts/mp-debug-helper.js screenshot   path="$PWD/screenshots/home.png"
+# → 人工确认布局、颜色、间距正常
+
+# ===== Check 4: 最终确认 =====
+node scripts/mp-debug-helper.js assert_state condition=no_console_errors
 ```
 
 ### 场景 2：检查 API 请求是否正确发出
 
 ```bash
 node scripts/mp-debug-helper.js navigate_to url="/pages/detail/detail?id=123"
+
+# ===== Check 1: 导航后立即检查 Console =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → count=0 ✅ 无错误（若有 request:fail 错误，需先修复域名配置）
+
+# ===== Check 2: 等待内容加载 =====
 node scripts/mp-debug-helper.js wait_for    selector=".detail-content" timeout=5000
+
+# ===== Check 3: 检查网络请求 =====
 node scripts/mp-debug-helper.js list_network_requests urlPattern="/api/product/detail" successOnly=true
-# → 返回所有匹配的请求列表
+# → 返回所有匹配的请求列表，确保 status=200
 node scripts/mp-debug-helper.js get_network_request reqid=1
-# → 返回单条请求的 header/body/response
+# → 返回单条请求的 header/body/response — 确认响应数据格式正确
+
+# ===== Check 3: 样式检查 =====
+node scripts/mp-debug-helper.js query_selector selector=".detail-title"
+node scripts/mp-debug-helper.js assert_text uid=el-1 textContains="商品详情"
+node scripts/mp-debug-helper.js screenshot path="$PWD/screenshots/detail.png"
+# → 确认内容区域完整呈现，图片正常加载
+
+# ===== Check 4: 最终确认 =====
+node scripts/mp-debug-helper.js diagnose_connection
+# → issues 为空
 ```
 
 ### 场景 3：确认分包加载
 
 ```bash
 node scripts/mp-debug-helper.js navigate_to url="/pagesA/list/list"
+
+# ===== Check 1: Console 错误检查 =====
 node scripts/mp-debug-helper.js list_console_messages type=error
-# → 空数组表示分包加载成功
+# → count=0 ✅ 空数组表示分包加载成功
+
+# ===== Check 2: View 层检查 =====
+node scripts/mp-debug-helper.js wait_for selector=".list-content" timeout=8000
+# → 分包页面正常加载
+
+# ===== Check 3: 样式检查 =====
+node scripts/mp-debug-helper.js query_selector selector=".list-item"
+node scripts/mp-debug-helper.js assert_state uid=el-1 condition=visible
+node scripts/mp-debug-helper.js screenshot path="$PWD/screenshots/subpackage.png"
+# → 确认分包页面样式与主包一致
+
+# ===== Check 4: Assert + 确认 =====
 node scripts/mp-debug-helper.js assert_state condition=no_console_errors
 ```
 
 ### 场景 4：表单提交验证
 
 ```bash
+# 填写表单
 node scripts/mp-debug-helper.js query_selector selector="input#name"
 node scripts/mp-debug-helper.js input_text    uid=el-1 text="张三"
+
+# ===== Check 1: 输入后查 console =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → count=0 ✅
+
 node scripts/mp-debug-helper.js query_selector selector="input#phone"
 node scripts/mp-debug-helper.js input_text    uid=el-2 text="13800138000"
+
+# 提交
 node scripts/mp-debug-helper.js query_selector selector="button.submit"
 node scripts/mp-debug-helper.js click         uid=el-3
+
+# ===== Check 1: 提交后查 console =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → count=0 ✅ 无接口报错
+
+# ===== Check 2: View 层检查 =====
 node scripts/mp-debug-helper.js wait_for      selector=".success-toast" timeout=3000
 node scripts/mp-debug-helper.js query_selector selector=".success-toast"
 node scripts/mp-debug-helper.js assert_text   uid=el-4 textContains="提交成功"
+# → 提交成功 ✅
+
+# ===== Check 3: 样式检查 =====
+node scripts/mp-debug-helper.js screenshot path="$PWD/screenshots/form-submit.png"
+# → 确认成功提示的样式、位置正常，无布局错乱
+
+# ===== Check 4: 最终确认 =====
+node scripts/mp-debug-helper.js assert_state condition=no_console_errors
 ```
 
 ### 场景 5：执行任意 JS（评估）
 
 ```bash
 node scripts/mp-debug-helper.js evaluate_script script="(() => ({ system: wx.getSystemInfoSync() }))()"
+
+# ===== Check 1: 评估后查 console =====
+node scripts/mp-debug-helper.js list_console_messages type=error
+# → count=0 ✅ 评估无异常
+
+# ===== Check 3: 确认系统信息完整性 =====
+# 检查 evaluate_script 返回结果是否包含预期字段
 ```
 
 ## Operations Reference (31 ops)
@@ -681,7 +1112,7 @@ jobs:
 ## Common mistakes
 
 1. **服务端口未开启** — `connect` 失败时，先检查微信开发者工具 → 设置 → 安全 → 服务端口是否开启，**重启 DevTools**。
-2. **DevTools 版本过低** — 旧版 DevTools 可能不支持自动化接口。请更新到最新稳定版。
+2. **DevTools 版本过低** — 旧版 DevTools 可能不支持自动化接口。运行 `node scripts/mp-devtools-cli.js --detect-version` 确认版本，若低于 1.06.23 则更新 DevTools 到最新稳定版。
 3. **appid 不匹配** — `manifest.json` 与 `project.config.json` 不一致。运行 `node scripts/mp-verify-appid.js` 检查。
 4. **未重启 DevTools 就用新构建** — 构建后需 `node scripts/mp-launch.js` 重新打开项目（或手动切换）才能加载新代码。
 5. **端口 9876 被占用** — 用 `MP_DEBUG_PORT=9877 node scripts/mp-debug-helper.js start` 改端口。
@@ -705,6 +1136,11 @@ jobs:
     `mp-launch.js` 已经处理好 `cmd.exe /c` 的 Windows .bat 调用，所以日常启动用 `mp-launch.js` 即可；只有当 `automator.launch()` 路径本身出问题（罕见）才需要上面这套手动命令。
 15. **`cli.bat open` 不够，必须再跑 `cli.bat auto`** — `open` 只起 IDE 的 HTTP 服务，调试 websocket 不会打开。automator 连上后 `currentPage` / `reLaunch` / `pageStack` 全部 hang。**必须**再跑 `cli.bat auto --project <path> --auto-port 9420 --trust-project` 才能激活 webview debugger。`mp-launch.js` 默认的 `open` 子命令只完成了第一步；要直接走 automator 路径，推荐手动两步（见 #14）。
 16. **无 GUI session 的环境跑不动真实 MP 自动化** — DevTools 需要 active Windows desktop session 才能起模拟器 webview。Windows Server / RDP / WSL 等无 console session 环境下，DevTools 进程能跑、HTTP 端口能 listen、websocket 能连，但 webview 不渲染，所有 `currentPage` / `reLaunch` / `pageStack` 操作都会 hang。判定方法：`tasklist /v | findstr wechat` 看进程窗口标题，没有项目窗口标题就是没起来。**这种环境下只能跑**：MP build (`npm run build:mp-weixin`)、`mp-verify-build.js` 构建产物完整性、`mp-verify-appid.js` appid 校验、Vitest/Playwright 等其他层测试。**必须在用户的本地 GUI 机器跑**：31 ops（截图/UI 断言/网络/console）、`mp-ci-debug.js` 场景、真实点击/输入测试。
+17. **`wechatide` 命令不可用** — 即使 DevTools >= 1.06.23，`wechatide` CLI 也可能未注册到 PATH。运行 `node scripts/mp-devtools-cli.js --recommend` 检查状态，如 `wechatideAvailable` 为 false 则走 automator 回退。
+18. **忘记先做版本检测就直接启动 helper** — 新版流程要求 **先做版本检测**（`--detect-version` 或 `--recommend`）再选择调试方法。跳过此步可能导致选择了不适配的方法。
+19. **console 出现 error 但未分析直接跳过** — 违反 [4-Check 原则](#e2e-debugging-methodology必读) 的 Check 1。console error 必须分析根因并修复，不能跳过。常见情况：`request:fail` 需要配置域名白名单或设置 `urlCheck: false`。
+20. **截图后未人工确认视觉样式** — 违反 Check 3 原则。截图必须打开文件确认布局、颜色、间距等视觉要素正常。
+21. **修复后未重新执行完整的 4-Check** — 修复代码后只验证了修复目标，但未重新执行完整的 4-Check 循环（console/view/style），可能引入新的 console error 或样式问题。**修复 → 重建 → 重新验证 → 确认通过**。
 
 ## Resources
 

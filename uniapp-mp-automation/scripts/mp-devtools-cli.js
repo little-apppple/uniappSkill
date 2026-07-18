@@ -284,12 +284,198 @@ function probeDevtoolsCli() {
   };
 }
 
+/**
+ * Detect the installed WeChat DevTools version by running `<cli> -v`.
+ *
+ * Returns null if the CLI can't be found or the version can't be parsed.
+ * The version string looks like "1.06.2309250" where:
+ *   major=1, minor=06, build=2309250 (YYMMDDNN release date format)
+ *
+ * @param {Object} [opts]
+ * @param {string} [opts.cliPath]  Explicit CLI path, bypasses detection
+ * @returns {Promise<Object|null>} { version, major, minor, build, officialSkillsSupported, officialSkillsStable, raw, cliPath }
+ */
+async function detectDevtoolsVersion(opts = {}) {
+  let cliPath;
+  if (opts.cliPath) {
+    cliPath = opts.cliPath;
+  } else {
+    try {
+      const result = await detectDevtoolsCliPath({ interactive: false, throwOnMiss: true });
+      cliPath = result.path;
+    } catch (_) {
+      return null; // Cant find DevTools at all
+    }
+  }
+
+  try {
+    // On Windows, .bat/.cmd needs shell=true (execSync default).
+    // The `-v` flag outputs the version and exits.
+    const output = execSync(`"${cliPath}" -v`, {
+      encoding: 'utf-8',
+      timeout: 10000,
+      windowsHide: true,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+
+    const raw = (output || '').trim();
+    // Match version patterns:
+    //   "WeChat DevTools 1.06.2309250"
+    //   "微信开发者工具 1.06.2309250"
+    //   "版本 1.06.2309250"
+    const match = raw.match(/(\d+)\.(\d+)\.(\d+)/);
+    if (!match) return null;
+
+    const version = match[0];
+    const major = parseInt(match[1], 10);
+    const minor = parseInt(match[2], 10);
+    const build = parseInt(match[3], 10);
+
+    // Official Skills (miniprogram-dev-skill via wechatide CLI) was introduced in
+    // DevTools 1.06.23xxxxx (June 2023). Build numbers follow YYMMDDNN format.
+    // Broad check: major >= 1 && minor >= 6
+    // Stable check: build >= 230000 (June 2023 or later)
+    const officialSkillsSupported = major >= 1 && minor >= 6;
+    const officialSkillsStable = major >= 1 && minor >= 6 && build >= 230000;
+
+    return {
+      version,
+      major,
+      minor,
+      build,
+      officialSkillsSupported,
+      officialSkillsStable,
+      raw,
+      cliPath,
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+/**
+ * Recommend which debugging approach to use based on DevTools version and
+ * available tooling (official Skills vs miniprogram-automator).
+ *
+ * Decision logic:
+ *   1. DevTools >= 1.06.23 AND wechatide CLI available → official_skills
+ *   2. miniprogram-automator installed → automator
+ *   3. Neither → none (with guidance)
+ *
+ * @param {Object} [opts]
+ * @param {string} [opts.cliPath]  Explicit CLI path, bypasses detection
+ * @returns {Promise<{approach: string, reason: string, versionInfo: Object|null,
+ *                     wechatideAvailable: boolean, wechatideLocalAvailable: boolean,
+ *                     wechatideLocalPath: string|null, automatorAvailable: boolean}>}
+ */
+async function recommendApproach(opts = {}) {
+  const versionInfo = await detectDevtoolsVersion(opts);
+
+  // Check if wechatide is globally available in PATH
+  let wechatideAvailable = false;
+  try {
+    execSync('wechatide --help', {
+      encoding: 'utf-8',
+      timeout: 5000,
+      windowsHide: true,
+      stdio: 'ignore',
+    });
+    wechatideAvailable = true;
+  } catch (_) {
+    // Some versions respond to `-h` or `--version` instead of `--help`
+    for (const flag of ['-h', '--version']) {
+      try {
+        execSync(`wechatide ${flag}`, {
+          encoding: 'utf-8',
+          timeout: 3000,
+          windowsHide: true,
+          stdio: 'ignore',
+        });
+        wechatideAvailable = true;
+        break;
+      } catch (_2) {}
+    }
+  }
+
+  // Check if wechatide is available alongside the DevTools CLI
+  // (same directory as cli.bat, shipped with DevTools since 1.06.23)
+  let wechatideLocalAvailable = false;
+  let wechatideLocalPath = null;
+  if (versionInfo && versionInfo.cliPath) {
+    const cliDir = path.dirname(versionInfo.cliPath);
+    const candidates = [
+      path.join(cliDir, 'wechatide'),
+      path.join(cliDir, 'wechatide.bat'),
+      path.join(cliDir, 'wechatide.cmd'),
+    ];
+    for (const c of candidates) {
+      if (isFile(c)) {
+        wechatideLocalAvailable = true;
+        wechatideLocalPath = c;
+        break;
+      }
+    }
+  }
+
+  // Check if miniprogram-automator is installable
+  const automatorAvailable = (() => {
+    try { require('miniprogram-automator'); return true; }
+    catch (_) { return false; }
+  })();
+
+  // Decision: prefer official Skills when wechatide is globally available in PATH.
+  // Local-only wechatide (alongside the DevTools CLI binary) is reported for info
+  // but does NOT trigger official_skills — user-facing examples use bare `wechatide`
+  // and requiring full-path invocation would be unergonomic.
+  if (versionInfo && versionInfo.officialSkillsSupported && wechatideAvailable) {
+    return {
+      approach: 'official_skills',
+      reason: `DevTools ${versionInfo.version} supports official Skills and wechatide CLI is ${wechatideAvailable ? 'globally available' : `available at ${wechatideLocalPath}`}`,
+      versionInfo,
+      wechatideAvailable,
+      wechatideLocalAvailable,
+      wechatideLocalPath,
+      automatorAvailable,
+    };
+  }
+
+  if (automatorAvailable) {
+    return {
+      approach: 'automator',
+      reason: versionInfo
+        ? versionInfo.officialSkillsSupported
+          ? `DevTools ${versionInfo.version} supports official Skills but wechatide CLI not found; falling back to automator (npm i -D miniprogram-automator)`
+          : `DevTools ${versionInfo.version} predates official Skills stable (need >= 1.06.23); using automator via miniprogram-automator`
+        : 'DevTools version not detected; falling back to automator (miniprogram-automator)',
+      versionInfo,
+      wechatideAvailable,
+      wechatideLocalAvailable,
+      wechatideLocalPath,
+      automatorAvailable,
+    };
+  }
+
+  return {
+    approach: 'none',
+    reason: versionInfo
+      ? `DevTools ${versionInfo.version} detected but neither wechatide CLI nor miniprogram-automator is available.\nInstall: npm i -D miniprogram-automator, or update DevTools to get official Skills.`
+      : 'DevTools not detected and miniprogram-automator not installed.\nRun node scripts/mp-devtools-cli.js to configure DevTools CLI path, then npm i -D miniprogram-automator.',
+    versionInfo,
+    wechatideAvailable,
+    wechatideLocalAvailable,
+    wechatideLocalPath,
+    automatorAvailable,
+  };
+}
+
 module.exports = {
   detectDevtoolsCliPath,
+  detectDevtoolsVersion,
   probeDevtoolsCli,
   readCache,
-  writeCache,
   readRegistryCliPath,
+  recommendApproach,
+  writeCache,
   platformCandidates,
   isInteractive,
   CACHE_DIR,
@@ -297,9 +483,11 @@ module.exports = {
 };
 
 // Standalone CLI:
-//   node scripts/mp-devtools-cli.js            -> detect (prompts if TTY)
-//   node scripts/mp-devtools-cli.js --probe    -> report all sources, no prompt, no throw
-//   node scripts/mp-devtools-cli.js --clear    -> remove cache file
+//   node scripts/mp-devtools-cli.js                    -> detect (prompts if TTY)
+//   node scripts/mp-devtools-cli.js --probe            -> report all sources, no prompt, no throw
+//   node scripts/mp-devtools-cli.js --clear            -> remove cache file
+//   node scripts/mp-devtools-cli.js --detect-version   -> detect version + recommend approach
+//   node scripts/mp-devtools-cli.js --recommend         -> recommend approach (combined)
 if (require.main === module) {
   const argv = process.argv.slice(2);
   const print = (obj) => console.log(JSON.stringify(obj, null, 2));
@@ -313,6 +501,18 @@ if (require.main === module) {
       if (argv.includes('--clear')) {
         try { fs.unlinkSync(CACHE_FILE); print({ ok: true, cleared: CACHE_FILE }); }
         catch (e) { print({ ok: true, cleared: false, reason: e.code }); }
+        return;
+      }
+      if (argv.includes('--detect-version') || argv.includes('--recommend')) {
+        const cliIdx = argv.indexOf('--cli');
+        const cliPath = cliIdx >= 0 ? argv[cliIdx + 1] : undefined;
+        const versionInfo = await detectDevtoolsVersion({ cliPath });
+        if (argv.includes('--recommend')) {
+          const rec = await recommendApproach({ cliPath });
+          print({ ok: true, ...rec });
+        } else {
+          print({ ok: true, versionInfo });
+        }
         return;
       }
       const explicitIdx = argv.indexOf('--cli');
