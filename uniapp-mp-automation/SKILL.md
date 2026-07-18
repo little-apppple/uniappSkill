@@ -393,7 +393,7 @@ node scripts/mp-devtools-cli.js --recommend
   "ok": true,
   "approach": "automator",
   "reason": "DevTools 1.05.2204110 predates official Skills (need Nightly Electron Build >= 2.02.2607032); using automator via miniprogram-automator",
-  "versionInfo": { "version": "1.06.2204110", "officialSkillsSupported": false, ... },
+  "versionInfo": { "version": "1.05.2204110", "officialSkillsSupported": false, ... },
   "automatorAvailable": true
 }
 ```
