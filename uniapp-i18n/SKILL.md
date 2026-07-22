@@ -59,7 +59,13 @@ plurals, formatting, lazy-loading, or 5+ languages, use **`vue-i18n`**.
 ## Option A: built-in uni-app i18n
 
 The built-in API comes from `@dcloudio/uni-i18n`. Most projects don't install it
-explicitly — it's bundled with uni-app.
+explicitly — it's bundled with uni-app. The official built-in approach uses
+`app.use()` to register i18n (see [uni-app i18n docs](https://uniapp.dcloud.net.cn/tutorial/i18n.html)),
+making `$t` available in templates.
+
+The example below shows a **manual alternative** using `globalProperties.$t` for when
+you want full control without adding a dependency. It uses `uni.getLocale()` /
+`uni.setLocale()` for locale detection and switching — these are real uni-app APIs.
 
 ### Translation files
 

@@ -67,7 +67,7 @@ into any of the following:
 
 ```bash
 # Example: copy all skills to global Claude skills directory
-for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
+for /d %s in (.\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
 # Or copy individual skills:
 xcopy /E /I uniapp-skills\uniapp-architect "%USERPROFILE%\.claude\skills\uniapp-architect"
 xcopy /E /I uniapp-skills\uniapp-fundamentals "%USERPROFILE%\.claude\skills\uniapp-fundamentals"
@@ -320,7 +320,7 @@ When the user asks a uni-app question, the agent should:
 3. Cross-reference other sub-skills only when the current layer's decision points to
    them.
 
-Don't load all 9 skills at once — it burns context. Load on demand.
+Don't load all 20 skills at once — it burns context. Load on demand.
 
 ## Recommended reading order for a new uni-app developer
 
@@ -339,7 +339,7 @@ Don't load all 9 skills at once — it burns context. Load on demand.
 These skills were designed with three principles:
 
 1. **No overlap with `uniapp-project`** — that skill (a separate skill, installed
-   independently) is the per-component / per-API reference. These 18 skills are the
+   independently) is the per-component / per-API reference. These 20 skills are the
    workflow / pattern layer. Together they cover "how to use uni-app" completely.
 
 2. **Each sub-skill is independently useful** — you can load any one without loading

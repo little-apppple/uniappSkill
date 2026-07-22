@@ -53,7 +53,7 @@
 
 ```bash
 # 示例：将所有技能复制到全局 Claude skills 目录
-for /d %s in (d:\workspace\mySkills\uniapp-skills\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
+for /d %s in (.\uniapp-*) do xcopy /E /I "%s" "%USERPROFILE%\.claude\skills\%~nxs"
 # 或逐个复制技能：
 xcopy /E /I uniapp-skills\uniapp-architect "%USERPROFILE%\.claude\skills\uniapp-architect"
 xcopy /E /I uniapp-skills\uniapp-fundamentals "%USERPROFILE%\.claude\skills\uniapp-fundamentals"
@@ -278,7 +278,7 @@ npx skills add obra/superpowers
 
 这套技能遵循三个设计原则：
 
-1. **不与 `uniapp-project` 重叠**——该技能（独立安装）是组件/API 参考。这 19 个技能是工作流/模式层，合起来完整覆盖"如何使用 uni-app"。
+1. **不与 `uniapp-project` 重叠**——该技能（独立安装）是组件/API 参考。这 20 个技能是工作流/模式层，合起来完整覆盖"如何使用 uni-app"。
 
 2. **每个子技能独立可用**——你可以只加载任意一个，不依赖其他。它们在跨切面问题时相互引用，但不存在硬依赖。
 

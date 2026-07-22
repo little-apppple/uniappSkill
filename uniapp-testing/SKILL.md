@@ -144,7 +144,7 @@ const uniMock = {
   $off: vi.fn(),
   login: vi.fn(),
   checkSession: vi.fn(),
-  getUserProfile: vi.fn(), // Deprecated — WeChat removed this API
+  getUserProfile: vi.fn(), // Deprecated — WeChat deprecated this API in April 2021
   getLocation: vi.fn(),
   scanCode: vi.fn(),
   chooseImage: vi.fn(),

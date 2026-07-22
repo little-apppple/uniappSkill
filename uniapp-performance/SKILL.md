@@ -335,8 +335,13 @@ WeChat DevTools shows the bundle size on upload. If you're over 2MB:
 Run `npm run build:h5` and check `dist/build/h5/static/js/` for size.
 
 ```bash
-# Quick check
+# Quick check (bash / Git Bash / WSL)
 ls -la dist/build/h5/static/js/ | sort -k5 -n -r | head
+```
+
+```powershell
+# Quick check (Windows PowerShell)
+ls dist/build/h5/static/js/ | Sort-Object Length -Descending | Select-Object -First 10
 ```
 
 Use Vite's bundle analyzer:

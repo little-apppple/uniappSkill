@@ -141,7 +141,7 @@ Key translation points:
 - JSX → Vue template (lowercase custom elements, `@click` instead of `onClick`)
 - `useState` → `ref`
 - `useEffect` with deps → `watch`
-- `@tarojs/taro` → `uni` global
+- `@tarojs/taro` → `uni` global (core APIs map 1:1; Taro 3+ also uses direct imports from `@tarojs/components` etc.)
 - `className` → `class`
 
 ### State management translation

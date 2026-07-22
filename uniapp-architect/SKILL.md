@@ -12,7 +12,7 @@ a small set of cross-cutting decisions that the other skills depend on:
 
 1. **Framework choice** — Vue2 (legacy) vs Vue3 vs uni-app x (uvue + UTS)
 2. **Tooling choice** — HBuilderX (visual IDE) vs CLI (`vue-cli` / `vite` + `dcloudio/uni-preset-vue`)
-3. **Sub-skill routing** — which of the 18 sibling skills to load for a given task
+3. **Sub-skill routing** — which of the 19 sibling skills to load for a given task
 
 If you (the agent) already know which sub-skill applies, jump straight to it. Load this
 skill only when the user's intent is ambiguous, when they ask for an overall architecture
@@ -83,9 +83,10 @@ review, or when they ask "where do I start".
 | `uniapp-migration` | Taro → uni-app, native WeChat MP → uni-app, Vue 2 → Vue 3, Vue 3 → uni-app x |
 | `uniapp-plugin-authoring` | uni_modules plugin structure, package.json, easycom.json, multi-platform support, UTS native plugins, publish to DCloud market |
 | `uniapp-ui-libraries` | Comparison and integration for uView Plus / FirstUI / ThorUI / Wot Design Uni / uv-ui / vk-uview-ui / Tuniao / ColorUI / GraceUI |
+| `uniapp-scaffolder` | List, filter, and fetch starter templates via CLI; curated registry with tag filtering; HBuilderX marketplace fallback |
 
 > The pre-existing `uniapp-project` skill (component + API catalog with examples/references)
-> stays the **reference** for "how do I use component X or API Y". The 18 skills above are
+> stays the **reference** for "how do I use component X or API Y". The 19 skills above are
 > the **workflow / pattern** layer that sits on top.
 
 ## 目录结构

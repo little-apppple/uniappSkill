@@ -119,7 +119,7 @@ const pushClientId = ref<string | null>(null)
 const pushEnabled = ref(false)
 
 onLaunch(() => {
-  // #ifdef APP-PLUS
+  // #ifdef APP
   // Get the device's push token (client_id in uni-push terms)
   const clientInfo = uni.getPushClientId({
     success: (res) => {
@@ -172,7 +172,7 @@ For WeChat MP, push arrives via the MP lifecycle instead.
 
 ```ts
 // In App.vue onLaunch — App native push events
-// #ifdef APP-PLUS
+// #ifdef APP
 // 1. Push received while app is in foreground
 plus.push.addEventListener('receive', (msg) => {
   console.log('Push received:', msg.payload)
@@ -197,10 +197,16 @@ plus.push.addEventListener('click', (msg) => {
 // onShow((options) => { /* check options for push data */ })
 ```
 
-> **Note on API changes**: In older uni-app versions (HBuilderX 3.x), push events were
-> available as `uni.onPushMessage()` / `uni.onPushClick()`. These are deprecated in
-> favor of `plus.push.addEventListener('receive', ...)` / `plus.push.addEventListener('click', ...)`.
-> For WeChat MP, push routing is handled via 订阅消息 with a `page` parameter (see below).
+> **Note on API availability**: Push event handling differs by platform:
+> - **App (native)**: Use `plus.push.addEventListener('receive', ...)` and
+>   `plus.push.addEventListener('click', ...)` for native push events. The older
+>   `uni.onPushMessage()` / `uni.onPushClick()` APIs still work in HBuilderX 3.x
+>   Vue 2 projects but are not recommended for new development.
+> - **WeChat MP**: Push routing is handled via 订阅消息 with a `page` parameter.
+>   No `plus.push` API is available on MP — use the WeChat MP lifecycle
+>   (`onShow` / `onLoad`) to handle incoming push data.
+> - **H5**: Use the Web Push API (service worker) instead; see the "Web push (H5)"
+>   section below.
 
 In `App.vue` (mounted once):
 
@@ -209,7 +215,7 @@ In `App.vue` (mounted once):
 import { onLaunch } from '@dcloudio/uni-app'
 
 onLaunch(() => {
-  // #ifdef APP-PLUS
+  // #ifdef APP
   plus.push.addEventListener('receive', (msg) => { /* foreground received */ })
   plus.push.addEventListener('click', (msg) => { /* notification clicked */ })
   // #endif

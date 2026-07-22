@@ -158,7 +158,7 @@ export const useThemeStore = defineStore('theme', () => {
     })
   }
   // #endif
-  // #ifdef MP || APP-PLUS
+  // #ifdef MP || APP
   uni.onThemeChange((res) => {
     if (mode.value === 'auto') {
       applyTheme(res.theme === 'dark' ? 'dark' : 'light')
@@ -168,7 +168,7 @@ export const useThemeStore = defineStore('theme', () => {
 
   function applyTheme(theme: 'light' | 'dark') {
     resolved.value = theme
-    // #ifdef H5 || APP-PLUS
+    // #ifdef H5 || APP
     if (typeof document !== 'undefined') {
       document.documentElement.setAttribute('data-theme', theme)
     }
